@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
 import { authApi } from '@/lib/auth';
 import { AccountInfo, LoginDto } from "@/types/nestapi";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useCallback, useContext, useState } from 'react';
 
 interface AuthContextType {
   user: AccountInfo | null;
@@ -9,8 +10,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (params: LoginDto) => Promise<void>;
   logout: () => void;
-  getToken: () => string | null;
-  setToken: (token: string) => void;
+  getToken: () => Promise<string | null>;
+  setToken: (token: string) => Promise<void>;
   setUser: (user: AccountInfo) => void;
 }
 
@@ -18,35 +19,46 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AccountInfo | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setTokenState] = useState<string | null>(null);
   const [perms, setPerms] = useState<string[] | null>(null);
+
+  const setToken = useCallback(async (newToken: string) => {
+    setTokenState(newToken);
+    await AsyncStorage.setItem('token', newToken);
+  }, []);
 
   const login = useCallback(async (params: LoginDto) => {
     try {
       const response = await authApi.login(params);
-      // axios 响应已经被拦截器处理，直接返回 data
+      console.log(response);
+      if (!response || !response.token) {
+        throw new Error('登录失败：未获取到有效的token');
+      }
       const { token: newToken } = response;
       const user = await authApi.getCurrentUser();
+      if (!user) {
+        throw new Error('登录失败：未获取到用户信息');
+      }
       const perms = await authApi.getCurrentUserPerm();
-      setToken(newToken);
+      await setToken(newToken);
       setUser(user);
       setPerms(perms);
-      localStorage.setItem('token', newToken);
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
     }
-  }, []);
+  }, [setToken]);
 
-  const logout = useCallback(() => {
-    setToken(null);
+  const logout = useCallback(async () => {
+    setTokenState(null);
     setUser(null);
     setPerms(null);
-    localStorage.removeItem('token');
+    await AsyncStorage.removeItem('token');
   }, []);
 
-  const getToken = useCallback(() => {
-    return token || localStorage.getItem('token');
+  const getToken = useCallback(async () => {
+    if (token) return token;
+    return await AsyncStorage.getItem('token');
   }, [token]);
 
   const value: AuthContextType = {
@@ -74,9 +86,8 @@ export function useAuth() {
 
 // 导出静态方法供API拦截器使用
 export const AuthContextStatic = {
-  getToken: () => localStorage.getItem('token'),
-  logout: () => {
-    localStorage.removeItem('token');
-    window.location.href = '/login';
+  getToken: async () => await AsyncStorage.getItem('token'),
+  logout: async () => {
+    await AsyncStorage.removeItem('token');
   },
 };

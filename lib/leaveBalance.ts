@@ -1,6 +1,6 @@
 import { LeaveBalance } from '@/lib/leave';
-import api from './api'
 import { LeaveDto, LeaveEntity, LeaveUpdateDto } from '@/types/nestapi';
+import api from './api';
 
 export const leaveBalanceApi = {
   // 创建请假申请

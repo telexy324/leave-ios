@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'expo-router';
+import React, { useEffect } from 'react';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 interface LeaveBalance {
   type: string;
@@ -35,6 +35,19 @@ const mockLeaveBalances: LeaveBalance[] = [
 export default function ProfileScreen() {
   const router = useRouter();
   const { user } = useAuth();
+
+  useEffect(() => {
+    // 检查用户是否已登录
+    if (!user) {
+      // 如果未登录，重定向到登录页面
+      router.replace('/(auth)/login');
+    }
+  }, [user]);
+
+  // 如果用户未登录，不渲染任何内容
+  if (!user) {
+    return null;
+  }
 
   return (
     <ScrollView className="flex-1 bg-gray-50">
@@ -95,13 +108,13 @@ export default function ProfileScreen() {
         <View className="space-y-3">
           <TouchableOpacity
             className="h-12 bg-white rounded-lg justify-center items-center shadow-sm"
-            onPress={() => router.push('/profile/edit')}
+            onPress={() => router.push('/(tabs)/profile/edit' as any)}
           >
             <Text className="text-gray-800 font-bold text-base">编辑个人信息</Text>
           </TouchableOpacity>
           <TouchableOpacity
             className="h-12 bg-white rounded-lg justify-center items-center shadow-sm"
-            onPress={() => router.push('/profile/change-password')}
+            onPress={() => router.push('/(tabs)/profile/change-password' as any)}
           >
             <Text className="text-gray-800 font-bold text-base">修改密码</Text>
           </TouchableOpacity>

@@ -1,5 +1,5 @@
-import api from './api';
 import { AccountInfo, LoginDto, LoginToken, PasswordUpdateDto, RegisterDto } from "@/types/nestapi";
+import api from './api';
 
 export const authApi = {
   // 用户登录
