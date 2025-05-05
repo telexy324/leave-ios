@@ -1,10 +1,17 @@
 import { AccountInfo, LoginDto, LoginToken, PasswordUpdateDto, RegisterDto } from "@/types/nestapi";
-import api from './api';
+import { request, RequestOptions } from './api';
 
 export const authApi = {
   // 用户登录
-  login: (params: LoginDto): Promise<LoginToken> => {
-    return api.post<LoginToken>('/api/auth/login', params);
+  login: (body: LoginDto, options?: RequestOptions): Promise<LoginToken> => {
+    return request<LoginToken>('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data: body,
+      ...(options || {}),
+    });
   },
 
   // 用户注册
@@ -13,8 +20,11 @@ export const authApi = {
   },
 
   // 获取当前用户信息
-  getCurrentUser: (): Promise<AccountInfo> => {
-    return api.get<AccountInfo>('/api/account/profile');
+  getCurrentUser: (options?: RequestOptions): Promise<AccountInfo> => {
+    return request<AccountInfo>('/api/account/profile', {
+      method: 'GET',
+      ...(options || {}),
+    });
   },
 
   // 修改密码
@@ -33,7 +43,10 @@ export const authApi = {
   },
 
   // 获取当前用户信息
-  getCurrentUserPerm: (): Promise<string[]> => {
-    return api.get<string[]>('/api/account/permissions');
+  getCurrentUserPerm: (options?: RequestOptions): Promise<string[]> => {
+    return request<string[]>('/api/account/permissions', {
+      method: 'GET',
+      ...(options || {}),
+    });
   },
 };

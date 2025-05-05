@@ -30,17 +30,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (params: LoginDto) => {
     try {
       const response = await authApi.login(params);
-      console.log(response);
       if (!response || !response.token) {
         throw new Error('登录失败：未获取到有效的token');
       }
       const { token: newToken } = response;
+      await setToken(newToken);
       const user = await authApi.getCurrentUser();
       if (!user) {
         throw new Error('登录失败：未获取到用户信息');
       }
       const perms = await authApi.getCurrentUserPerm();
-      await setToken(newToken);
       setUser(user);
       setPerms(perms);
     } catch (error) {
