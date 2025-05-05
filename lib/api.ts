@@ -11,7 +11,7 @@ interface CustomAxiosInstance extends Omit<AxiosInstance, 'get' | 'post' | 'put'
 
 // 创建axios实例
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000/api',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:7001',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

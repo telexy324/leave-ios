@@ -12,7 +12,10 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     try {
-      await login(email, password, rememberMe);
+      await login({
+        username: email,
+        password: password,
+      });
     } catch (error) {
       console.log('Login error:', error);
     }

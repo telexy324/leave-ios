@@ -3,7 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 
 export default function AppLayout() {
-  const { user } = useAuth();
+  const { perms } = useAuth();
+  const isAdmin = perms?.some(perm => {return perm === 'admin'})
 
   return (
     <Tabs
@@ -51,7 +52,7 @@ export default function AppLayout() {
           title: '我的',
         }}
       />
-      {user?.role === 'admin' && (
+      {isAdmin && (
         <Tabs.Screen
           name="admin"
           options={{

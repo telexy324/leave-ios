@@ -5,6 +5,7 @@ import { AccountInfo, LoginDto } from "@/types/nestapi";
 interface AuthContextType {
   user: AccountInfo | null;
   token: string | null;
+  perms: string[] | null;
   isAuthenticated: boolean;
   login: (params: LoginDto) => Promise<void>;
   logout: () => void;
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AccountInfo | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [perms, setPerms] = useState<string[] | null>(null);
 
   const login = useCallback(async (params: LoginDto) => {
     try {
@@ -25,8 +27,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // axios 响应已经被拦截器处理，直接返回 data
       const { token: newToken } = response;
       const user = await authApi.getCurrentUser();
+      const perms = await authApi.getCurrentUserPerm();
       setToken(newToken);
       setUser(user);
+      setPerms(perms);
       localStorage.setItem('token', newToken);
     } catch (error) {
       console.error('Login failed:', error);
@@ -37,6 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     setToken(null);
     setUser(null);
+    setPerms(null);
     localStorage.removeItem('token');
   }, []);
 
@@ -47,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value: AuthContextType = {
     user,
     token,
+    perms,
     isAuthenticated: !!token,
     login,
     logout,

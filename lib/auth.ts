@@ -31,4 +31,9 @@ export const authApi = {
   logout: (): Promise<void> => {
     return api.post('/api/account/logout');
   },
+
+  // 获取当前用户信息
+  getCurrentUserPerm: (): Promise<string[]> => {
+    return api.get<string[]>('/api/account/permissions');
+  },
 };

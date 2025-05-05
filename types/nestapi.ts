@@ -28,13 +28,13 @@ export interface LoginDto {
    */
   password: string;
   /** 验证码标识 */
-  captchaId: string;
+  captchaId?: string;
   /**
    * 用户输入的验证码
    * @minLength 4
    * @maxLength 4
    */
-  verifyCode: string;
+  verifyCode?: string;
 }
 
 export interface RegisterDto {
@@ -1200,7 +1200,7 @@ export interface TodoUpdateDto {
 }
 
 export interface LeaveEntity {
-  /** status: 1:PENDING, 2:APPROVED, 3:REJECTED */
+  /** status: 1:PENDING, 2:APPROVED, 3:REJECTED, 4:CANCELLED */
   status: number;
   /** status: 1:COMPENSATE, 2:ANNUAL, 3:SICK, 4:PERSONAL, 5:OTHER */
   type: number;
@@ -1324,7 +1324,7 @@ export interface LeaveUpdateDto {
 export interface LeaveBalanceEntity {
   /** status: 1:COMPENSATE, 2:ANNUAL, 3:SICK, 4:PERSONAL, 5:OTHER */
   type: number;
-  /** 任务耗时 */
+  /** 年度 */
   year: number;
   /** status: 1:REQUEST, 2:CANCEL */
   action: number;
