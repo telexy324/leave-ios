@@ -1,51 +1,131 @@
 import { LeaveBalance } from '@/lib/leave';
 import { LeaveDto, LeaveEntity, LeaveUpdateDto } from '@/types/nestapi';
-import api from './api';
+import { request, RequestOptions } from './api';
 
 export const leaveBalanceApi = {
   // 创建请假申请
-  createLeaveRequest: (params: LeaveDto) => {
-    return api.post<LeaveEntity>('/leave', params);
+  createLeaveRequest: (body: LeaveDto, options?: RequestOptions) => {
+    return request<LeaveEntity>('/api/leaves', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data: body,
+      ...(options || { successMsg: '创建成功' }),
+    });
   },
 
   // 获取请假申请列表
-  getLeaveRequests: (params?: {
-    type?: 1 | 2 | 3 | 4 | 5;
-    status?: 1 | 2 | 3;
-    startDate?: string;
-    endDate?: string;
-  }) => {
-    return api.get<LeaveEntity[]>('/leave', { params });
+  getLeaveRequests: (
+    // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+    params: API.LeaveListParams,
+    options?: RequestOptions,
+  )=> {
+    return request<{
+      items?: LeaveEntity[];
+      meta?: {
+        itemCount?: number;
+        totalItems?: number;
+        itemsPerPage?: number;
+        totalPages?: number;
+        currentPage?: number;
+      };
+    }>('/api/leaves', {
+      method: 'GET',
+      params: {
+        ...params,
+      },
+      ...(options || {}),
+    });
   },
 
   // 获取请假申请详情
-  getLeaveRequest: (id: string) => {
-    return api.get<LeaveEntity>(`/leave/${id}`);
+  getLeaveRequest: (
+    // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+    params: API.IdParams,
+    options?: RequestOptions,
+  )=> {
+      const { id: param0, ...queryParams } = params;
+      return request<LeaveEntity>(`/api/leaves/${param0}`, {
+        method: 'GET',
+        params: { ...queryParams },
+        ...(options || {}),
+      });
   },
 
   // 更新请假申请
-  updateLeaveRequest: (id: string, params: LeaveUpdateDto) => {
-    return api.put<LeaveEntity>(`/leave/${id}`, params);
+  updateLeaveRequest: (
+    // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+    params: API.IdParams,
+    body: LeaveUpdateDto,
+    options?: RequestOptions,
+  )=> {
+    const { id: param0, ...queryParams } = params;
+    return request<any>(`/api/leaves/${param0}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      params: { ...queryParams },
+      data: body,
+      ...(options || { successMsg: '更新成功' }),
+    });
   },
 
   // 取消请假申请
-  cancelLeaveRequest: (id: string) => {
-    return api.post(`/leave/${id}/cancel`);
+  cancelLeaveRequest: (
+    params: API.IdParams,
+    options?: RequestOptions,
+  ) => {
+    const { id: param0, ...queryParams } = params;
+    return request<void>(`/api/leaves/${param0}/cancel`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      ...(options || { successMsg: '取消成功' }),
+    });
   },
 
   // 审批请假申请
-  approveLeaveRequest: (id: string, comment?: string) => {
-    return api.post(`/leave/${id}/approve`, { comment });
+  approveLeaveRequest: (
+    params: API.IdParams,
+    body: LeaveUpdateDto,
+    options?: RequestOptions,
+  )=> {
+    const { id: param0, ...queryParams } = params;
+    return request<any>(`/api/leaves/${param0}/approve`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      params: { ...queryParams },
+      data: body,
+      ...(options || { successMsg: '审批成功' }),
+    });
   },
 
   // 拒绝请假申请
-  rejectLeaveRequest: (id: string, comment: string) => {
-    return api.post(`/leave/${id}/reject`, { comment });
+  rejectLeaveRequest: (
+    params: API.IdParams,
+    body: LeaveUpdateDto,
+    options?: RequestOptions,
+  )=> {
+    const { id: param0, ...queryParams } = params;
+    return request<any>(`/api/leaves/${param0}/reject`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      params: { ...queryParams },
+      data: body,
+      ...(options || { successMsg: '驳回成功' }),
+    });
   },
 
   // 获取请假余额
   getLeaveBalance: () => {
-    return api.get<LeaveBalance[]>('/leave/balance');
+    return api.get<LeaveBalance[]>('/leaves/balance');
   },
 
   // 获取请假统计
@@ -54,7 +134,7 @@ export const leaveBalanceApi = {
     endDate: string;
     departmentId?: string;
   }) => {
-    return api.get('/leave/statistics', { params });
+    return api.get('/leaves/statistics', { params });
   },
 
   // 获取请假日历数据
@@ -63,6 +143,6 @@ export const leaveBalanceApi = {
     endDate: string;
     departmentId?: string;
   }) => {
-    return api.get('/leave/calendar', { params });
+    return api.get('/leaves/calendar', { params });
   },
 };

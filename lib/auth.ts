@@ -14,10 +14,10 @@ export const authApi = {
     });
   },
 
-  // 用户注册
-  register: (params: RegisterDto): Promise<void> => {
-    return api.post('/api/auth/register', params);
-  },
+  // // 用户注册
+  // register: (params: RegisterDto): Promise<void> => {
+  //   return api.post('/api/auth/register', params);
+  // },
 
   // 获取当前用户信息
   getCurrentUser: (options?: RequestOptions): Promise<AccountInfo> => {
@@ -27,10 +27,10 @@ export const authApi = {
     });
   },
 
-  // 修改密码
-  changePassword: (params: PasswordUpdateDto): Promise<void> => {
-    return api.post('/api/account/password', params);
-  },
+  // // 修改密码
+  // changePassword: (params: PasswordUpdateDto): Promise<void> => {
+  //   return api.post('/api/account/password', params);
+  // },
 
   // 重置密码
   // resetPassword: (email: string): Promise<void> => {
@@ -38,8 +38,11 @@ export const authApi = {
   // },
 
   // 登出
-  logout: (): Promise<void> => {
-    return api.post('/api/account/logout');
+  logout: (options?: RequestOptions): Promise<void> => {
+    return request<any>('/api/account/logout', {
+      method: 'GET',
+      ...(options || {}),
+    });
   },
 
   // 获取当前用户信息
