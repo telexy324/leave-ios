@@ -23,6 +23,7 @@ export default function LoginScreen() {
         username: email,
         password: password,
       });
+      router.push('/(tabs)/profile')
     } catch (error: any) {
       console.error('Login error:', error);
       Alert.alert('登录失败', error.message || '请检查您的邮箱和密码是否正确');

@@ -64,6 +64,8 @@ export interface AccountInfo {
   remark: string;
   /** 头像 */
   avatar: string;
+  /** 是否管理员 */
+  isAdmin: boolean;
 }
 
 export interface MenuMeta {

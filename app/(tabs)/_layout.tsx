@@ -3,8 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 
 export default function AppLayout() {
-  const { perms } = useAuth();
-  const isAdmin = perms?.some(perm => {return perm === 'admin'})
+  const { user } = useAuth();
+  const isAdmin = user?.isAdmin
 
   return (
     <Tabs
@@ -34,12 +34,14 @@ export default function AppLayout() {
           title: '首页',
         }}
       />
-      <Tabs.Screen
-        name="leave-request"
-        options={{
-          title: '请假',
-        }}
-      />
+      {!isAdmin && (
+        <Tabs.Screen
+          name="leave-request"
+          options={{
+            title: '请假',
+          }}
+        />
+      )}
       <Tabs.Screen
         name="calendar"
         options={{
