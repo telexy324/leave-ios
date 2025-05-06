@@ -1,7 +1,7 @@
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 interface LeaveBalance {
   type: string;
@@ -34,7 +34,7 @@ const mockLeaveBalances: LeaveBalance[] = [
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     // 检查用户是否已登录
@@ -48,6 +48,32 @@ export default function ProfileScreen() {
   if (!user) {
     return null;
   }
+
+  const handleLogout = async () => {
+    Alert.alert(
+      '确认登出',
+      '确定要退出登录吗？',
+      [
+        {
+          text: '取消',
+          style: 'cancel',
+        },
+        {
+          text: '确定',
+          onPress: async () => {
+            try {
+              await logout();
+              router.replace('/(auth)/login');
+            } catch (error) {
+              console.error('Logout failed:', error);
+              Alert.alert('错误', '登出失败，请重试');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   return (
     <ScrollView className="flex-1 bg-gray-50">
@@ -117,6 +143,12 @@ export default function ProfileScreen() {
             onPress={() => router.push('/(tabs)/profile/change-password' as any)}
           >
             <Text className="text-gray-800 font-bold text-base">修改密码</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className="h-12 bg-red-500 rounded-lg justify-center items-center shadow-sm"
+            onPress={handleLogout}
+          >
+            <Text className="text-white font-bold text-base">退出登录</Text>
           </TouchableOpacity>
         </View>
       </View>

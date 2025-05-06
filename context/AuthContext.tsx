@@ -1,7 +1,7 @@
 import { authApi } from '@/lib/auth';
 import { AccountInfo, LoginDto } from "@/types/nestapi";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useCallback, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 interface AuthContextType {
   user: AccountInfo | null;
@@ -21,6 +21,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AccountInfo | null>(null);
   const [token, setTokenState] = useState<string | null>(null);
   const [perms, setPerms] = useState<string[] | null>(null);
+
+  // 在应用启动时恢复用户信息
+  useEffect(() => {
+    const restoreUser = async () => {
+      try {
+        const storedToken = await AsyncStorage.getItem('token');
+        if (storedToken) {
+          setTokenState(storedToken);
+          const userInfo = await authApi.getCurrentUser();
+          const userPerms = await authApi.getCurrentUserPerm();
+          setUser(userInfo);
+          setPerms(userPerms);
+        }
+      } catch (error) {
+        console.error('Failed to restore user:', error);
+        await AsyncStorage.removeItem('token');
+        setTokenState(null);
+        setUser(null);
+        setPerms(null);
+      }
+    };
+
+    restoreUser();
+  }, []);
 
   const setToken = useCallback(async (newToken: string) => {
     setTokenState(newToken);
