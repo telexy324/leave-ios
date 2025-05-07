@@ -1323,6 +1323,25 @@ export interface LeaveUpdateDto {
   status?: 1 | 2 | 3 | 4;
 }
 
+export interface LeaveStats {
+  /** 调休总天数 */
+  totalCompensatoryLeaves: number;
+  /** 调休已使用天数 */
+  usedCompensatoryLeaves: number;
+  /** 年假总天数 */
+  totalAnnualLeaves: number;
+  /** 年假已使用天数 */
+  usedAnnualLeaves: number;
+  /** 病假总天数 */
+  totalSickLeaves: number;
+  /** 病假已使用天数 */
+  usedSickLeaves: number;
+  /** 事假总天数 */
+  totalPersonalLeaves: number;
+  /** 事假已使用天数 */
+  usedPersonalLeaves: number;
+}
+
 export interface LeaveBalanceEntity {
   /** status: 1:COMPENSATE, 2:ANNUAL, 3:SICK, 4:PERSONAL, 5:OTHER */
   type: number;

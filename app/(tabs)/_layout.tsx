@@ -42,21 +42,20 @@ export default function AppLayout() {
           title: '首页',
         }}
       />
-      {isAdmin === true ? (
-        <Tabs.Screen
-          name="approval/index"
-          options={{
-            title: '审批',
-          }}
-        />
-      ) : (
-        <Tabs.Screen
-          name="leave-request/index"
-          options={{
-            title: '请假',
-          }}
-        />
-      )}
+      <Tabs.Screen
+        name="approval/index"
+        options={{
+          title: '审批',
+          tabBarItemStyle: isAdmin ? undefined : { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="leave-request/index"
+        options={{
+          title: '请假',
+          tabBarItemStyle: isAdmin ? { display: 'none' } : undefined,
+        }}
+      />
       <Tabs.Screen
         name="calendar"
         options={{
@@ -73,36 +72,54 @@ export default function AppLayout() {
         name="leave-request/new"
         options={{
           href: null,
+          tabBarItemStyle: {
+            display: 'none'
+          }
         }}
       />
       <Tabs.Screen
         name="leave-request/[id]"
         options={{
           href: null,
+          tabBarItemStyle: {
+            display: 'none'
+          }
         }}
       />
       <Tabs.Screen
         name="leave-request/edit/[id]"
         options={{
           href: null,
+          tabBarItemStyle: {
+            display: 'none'
+          }
         }}
       />
       <Tabs.Screen
         name="approval/[id]"
         options={{
           href: null,
+          tabBarItemStyle: {
+            display: 'none'
+          }
         }}
       />
       <Tabs.Screen
         name="profile/edit"
         options={{
           href: null,
+          tabBarItemStyle: {
+            display: 'none'
+          }
         }}
       />
       <Tabs.Screen
         name="profile/change-password"
         options={{
           href: null,
+          tabBarItemStyle: {
+            display: 'none'
+          }
         }}
       />
     </Tabs>

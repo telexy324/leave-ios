@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
-import { LeaveRequest, LeaveStats } from '../types';
+import { LeaveRequest } from '@/types';
+import { LeaveStats } from '@/types/nestapi';
+import { leaveBalanceApi } from "@/lib/leaveBalance";
 
 interface LeaveContextType {
   leaveRequests: LeaveRequest[];
@@ -17,14 +19,14 @@ const LeaveContext = createContext<LeaveContextType | undefined>(undefined);
 export const LeaveProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [leaveStats, setLeaveStats] = useState<LeaveStats>({
-    totalDays: 0,
-    usedDays: 0,
-    remainingDays: 0,
-    byType: {
-      annual: 0,
-      sick: 0,
-      personal: 0,
-    },
+    totalCompensatoryLeaves: 0,
+    usedCompensatoryLeaves: 0,
+    totalAnnualLeaves: 0,
+    usedAnnualLeaves: 0,
+    totalSickLeaves: 0,
+    usedSickLeaves: 0,
+    totalPersonalLeaves: 0,
+    usedPersonalLeaves: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,20 +91,8 @@ export const LeaveProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       setIsLoading(true);
       setError(null);
-      
-      // TODO: 调用实际的API
-      const mockStats: LeaveStats = {
-        totalDays: 20,
-        usedDays: 5,
-        remainingDays: 15,
-        byType: {
-          annual: 10,
-          sick: 5,
-          personal: 5,
-        },
-      };
-      
-      setLeaveStats(mockStats);
+      const stats = await leaveBalanceApi.getLeaveStats();
+      setLeaveStats(stats);
     } catch (err) {
       setError('获取假期统计失败');
       throw err;

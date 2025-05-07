@@ -23,16 +23,16 @@ export default function HomeScreen() {
           <Text className="text-lg font-bold mb-4">假期统计</Text>
           <View className="flex-row justify-between">
             <View className="flex-1 items-center">
-              <Text className="text-2xl font-bold text-primary">{leaveStats?.annual}</Text>
+              <Text className="text-2xl font-bold text-primary">{leaveStats?.totalAnnualLeaves}</Text>
               <Text className="text-gray-600">年假剩余</Text>
             </View>
             <View className="flex-1 items-center">
-              <Text className="text-2xl font-bold text-primary">{leaveStats?.sick}</Text>
+              <Text className="text-2xl font-bold text-primary">{leaveStats?.totalSickLeaves}</Text>
               <Text className="text-gray-600">病假剩余</Text>
             </View>
             <View className="flex-1 items-center">
-              <Text className="text-2xl font-bold text-primary">{leaveStats?.personal}</Text>
-              <Text className="text-gray-600">事假剩余</Text>
+              <Text className="text-2xl font-bold text-primary">{leaveStats?.totalCompensatoryLeaves}</Text>
+              <Text className="text-gray-600">调休剩余</Text>
             </View>
           </View>
         </View>
@@ -68,7 +68,7 @@ export default function HomeScreen() {
                 <Text className="text-xs text-gray-600">查看和修改个人信息</Text>
               </View>
             </TouchableOpacity>
-            {user?.role === 'admin' && (
+            {user?.isAdmin && (
               <TouchableOpacity
                 className="w-1/2 p-2.5"
                 onPress={() => router.push('/admin')}
