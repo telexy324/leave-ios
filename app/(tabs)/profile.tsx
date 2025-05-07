@@ -1,4 +1,4 @@
-import { useAuth } from '@/context/AuthContext';
+import { useAuthStore } from '@/lib/store/auth';
 import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
 import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -34,7 +34,8 @@ const mockLeaveBalances: LeaveBalance[] = [
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const user = useAuthStore(state => state.user);
+  const logout = useAuthStore(state => state.logout);
 
   useEffect(() => {
     // 检查用户是否已登录

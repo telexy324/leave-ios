@@ -1,4 +1,4 @@
-import { AuthContextStatic } from '@/context/AuthContext';
+import { useAuthStore } from '@/lib/store/auth';
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import qs from 'qs';
 
@@ -57,7 +57,7 @@ export interface RequestOptions extends AxiosRequestConfig {
 // 请求拦截器
 service.interceptors.request.use(
   async (config) => {
-    const token = await AuthContextStatic.getToken();
+    const token = await useAuthStore.getState().getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -85,10 +85,10 @@ service.interceptors.response.use(
     }
   },
   (error) => {
-    // if (error.response?.code === 401) {
-    //   // 处理未授权错误
-    //   AuthContextStatic.logout();
-    // }
+    if (error.response?.status === 401) {
+      // 处理未授权错误
+      useAuthStore.getState().logout();
+    }
     return Promise.reject(error);
   }
 );

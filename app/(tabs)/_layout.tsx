@@ -1,10 +1,10 @@
-import { useAuth } from '@/context/AuthContext';
+import { useAuthStore } from '@/lib/store/auth';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useEffect } from 'react';
 
 export default function AppLayout() {
-  const { user } = useAuth();
+  const user = useAuthStore(state => state.user);
   const isAdmin = user?.isAdmin;
 
   useEffect(() => {

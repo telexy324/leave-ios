@@ -1,11 +1,11 @@
-import { useAuth } from '@/context/AuthContext';
+import { useAuthStore } from '@/lib/store/auth';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login } = useAuth();
+  const login = useAuthStore(state => state.login);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);

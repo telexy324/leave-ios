@@ -1,12 +1,12 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { useAuthStore } from '@/lib/store/auth';
+import { useLeaveStore } from '@/lib/store/leave';
 import { useRouter } from 'expo-router';
-import { useLeave } from '@/context/LeaveContext';
-import { useAuth } from '@/context/AuthContext';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { leaveStats } = useLeave();
-  const { user } = useAuth();
+  const leaveStats = useLeaveStore(state => state.leaveStats);
+  const user = useAuthStore(state => state.user);
 
   return (
     <ScrollView className="flex-1 bg-gray-50">
