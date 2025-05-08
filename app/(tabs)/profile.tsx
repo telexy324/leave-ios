@@ -1,5 +1,6 @@
 import { leaveBalanceApi } from '@/lib/leaveBalance';
 import { useAuthStore } from '@/lib/store/auth';
+import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
@@ -194,23 +195,28 @@ export default function ProfileScreen() {
         </View>
 
         {/* 操作按钮 */}
-        <View className="space-y-3">
+        <View className="p-4 space-y-3">
           <TouchableOpacity
-            className="h-12 bg-white rounded-lg justify-center items-center shadow-sm"
+            className="h-12 bg-white rounded-lg justify-center items-center shadow-sm flex-row"
             onPress={() => router.push('/(tabs)/profile/edit' as any)}
           >
+            <Ionicons name="create-outline" size={24} color="#3b82f6" style={{ marginRight: 8 }} />
             <Text className="text-gray-800 font-bold text-base">编辑个人信息</Text>
           </TouchableOpacity>
+          
           <TouchableOpacity
-            className="h-12 bg-white rounded-lg justify-center items-center shadow-sm"
+            className="h-12 bg-white rounded-lg justify-center items-center shadow-sm flex-row"
             onPress={() => router.push('/(tabs)/profile/change-password' as any)}
           >
+            <Ionicons name="key-outline" size={24} color="#3b82f6" style={{ marginRight: 8 }} />
             <Text className="text-gray-800 font-bold text-base">修改密码</Text>
           </TouchableOpacity>
+          
           <TouchableOpacity
-            className="h-12 bg-red-500 rounded-lg justify-center items-center shadow-sm"
+            className="h-12 bg-red-500 rounded-lg justify-center items-center shadow-sm flex-row"
             onPress={handleLogout}
           >
+            <Ionicons name="log-out-outline" size={24} color="white" style={{ marginRight: 8 }} />
             <Text className="text-white font-bold text-base">退出登录</Text>
           </TouchableOpacity>
         </View>

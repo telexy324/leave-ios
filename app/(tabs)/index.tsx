@@ -1,5 +1,6 @@
 import { leaveBalanceApi } from '@/lib/leaveBalance';
 import { useAuthStore } from '@/lib/store/auth';
+import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -33,9 +34,9 @@ export default function HomeScreen() {
           <Text className="text-gray-600">部门：{user?.department}</Text>
         </View>
 
-        {/* 假期统计卡片 */}
-        <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
-          <Text className="text-lg font-bold mb-4">假期统计</Text>
+        {/* 请假统计卡片 */}
+        <View className="bg-white rounded-lg shadow-sm mx-4 mt-4 p-4">
+          <Text className="text-lg font-bold mb-4">请假统计</Text>
           <View className="flex-row justify-between">
             <View className="flex-1 items-center">
               <Text className="text-2xl font-bold text-primary">
@@ -59,52 +60,40 @@ export default function HomeScreen() {
         </View>
 
         {/* 快捷操作卡片 */}
-        <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
+        <View className="bg-white rounded-lg shadow-sm mx-4 mt-4 p-4">
           <Text className="text-lg font-bold mb-4">快捷操作</Text>
-          <View className="flex-row flex-wrap">
+          <View className="flex-row justify-between">
+            {/* 申请请假按钮 */}
             <TouchableOpacity
-              className="w-1/2 p-2.5"
-              onPress={() => router.push('/leave-request/new')}
+              className="w-[30%] aspect-square bg-blue-500 rounded-lg justify-center items-center shadow-sm"
+              onPress={() => router.push('/(tabs)/leave-request/new' as any)}
             >
-              <View className="bg-primary/10 rounded-lg p-4 items-center">
-                <Text className="text-primary font-bold mb-1">申请请假</Text>
-                <Text className="text-xs text-gray-600">发起新的请假申请</Text>
-              </View>
+              <Ionicons name="calendar-outline" size={28} color="white" style={{ marginBottom: 8 }} />
+              <Text className="text-white font-bold text-sm">申请请假</Text>
             </TouchableOpacity>
+
+            {/* 查看日历按钮 */}
             <TouchableOpacity
-              className="w-1/2 p-2.5"
-              onPress={() => router.push('/calendar')}
+              className="w-[30%] aspect-square bg-green-500 rounded-lg justify-center items-center shadow-sm"
+              onPress={() => router.push('/(tabs)/calendar' as any)}
             >
-              <View className="bg-success/10 rounded-lg p-4 items-center">
-                <Text className="text-success font-bold mb-1">查看日历</Text>
-                <Text className="text-xs text-gray-600">查看请假记录</Text>
-              </View>
+              <Ionicons name="calendar-number-outline" size={28} color="white" style={{ marginBottom: 8 }} />
+              <Text className="text-white font-bold text-sm">查看日历</Text>
             </TouchableOpacity>
+
+            {/* 个人信息按钮 */}
             <TouchableOpacity
-              className="w-1/2 p-2.5"
-              onPress={() => router.push('/profile')}
+              className="w-[30%] aspect-square bg-purple-500 rounded-lg justify-center items-center shadow-sm"
+              onPress={() => router.push('/(tabs)/profile' as any)}
             >
-              <View className="bg-warning/10 rounded-lg p-4 items-center">
-                <Text className="text-warning font-bold mb-1">个人信息</Text>
-                <Text className="text-xs text-gray-600">查看和修改个人信息</Text>
-              </View>
+              <Ionicons name="person-outline" size={28} color="white" style={{ marginBottom: 8 }} />
+              <Text className="text-white font-bold text-sm">个人信息</Text>
             </TouchableOpacity>
-            {user?.isAdmin && (
-              <TouchableOpacity
-                className="w-1/2 p-2.5"
-                onPress={() => router.push('/admin')}
-              >
-                <View className="bg-danger/10 rounded-lg p-4 items-center">
-                  <Text className="text-danger font-bold mb-1">管理后台</Text>
-                  <Text className="text-xs text-gray-600">管理用户和审批</Text>
-                </View>
-              </TouchableOpacity>
-            )}
           </View>
         </View>
 
-        {/* 最近请假记录卡片 */}
-        <View className="bg-white rounded-lg p-5 shadow-sm">
+        {/* 最近请假记录 */}
+        <View className="bg-white rounded-lg shadow-sm mx-4 mt-4 p-4 mb-4">
           <Text className="text-lg font-bold mb-4">最近请假记录</Text>
           {leaveStats?.recentRequests?.map((request, index) => (
             <TouchableOpacity

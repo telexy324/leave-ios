@@ -14,32 +14,22 @@ export default function AppLayout() {
 
   return (
     <Tabs
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-
-          if (route.name === 'index') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'leave-request/index') {
-            iconName = focused ? 'calendar' : 'calendar-outline';
-          } else if (route.name === 'calendar') {
-            iconName = focused ? 'calendar-number' : 'calendar-number-outline';
-          } else if (route.name === 'profile') {
-            iconName = focused ? 'person' : 'person-outline';
-          } else if (route.name === 'approval/index') {
-            iconName = focused ? 'checkmark-circle' : 'checkmark-circle-outline';
-          }
-
-          return <Ionicons name={iconName as any} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: '#3b82f6',
+      screenOptions={{
+        tabBarActiveTintColor: '#3b82f6', // 蓝色
         tabBarInactiveTintColor: 'gray',
-      })}
+        headerStyle: {
+          backgroundColor: '#3b82f6',
+        },
+        headerTintColor: '#fff',
+      }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: '首页',
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -47,6 +37,9 @@ export default function AppLayout() {
         options={{
           title: '审批',
           tabBarItemStyle: isAdmin ? undefined : { display: 'none' },
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? 'checkmark-circle' : 'checkmark-circle-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -54,18 +47,27 @@ export default function AppLayout() {
         options={{
           title: '请假',
           tabBarItemStyle: isAdmin ? { display: 'none' } : undefined,
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="calendar"
         options={{
           title: '日历',
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? 'calendar-number' : 'calendar-number-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: '我的',
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen

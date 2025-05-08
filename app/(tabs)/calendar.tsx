@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { Calendar } from 'react-native-calendars';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Calendar } from 'react-native-calendars';
 
 interface LeaveRequest {
   id: string;
@@ -65,69 +66,82 @@ export default function CalendarScreen() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-gray-50">
-      <View className="p-5">
-        {/* 日历视图 */}
-        <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
-          <Calendar
-            onDayPress={day => setSelectedDate(day.dateString)}
-            markedDates={getMarkedDates()}
-            theme={{
-              todayTextColor: '#2563eb',
-              selectedDayBackgroundColor: '#2563eb',
-              selectedDayTextColor: '#ffffff',
-            }}
-          />
-        </View>
-
-        {/* 图例说明 */}
-        <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
-          <Text className="text-lg font-bold mb-4">图例说明</Text>
-          <View className="space-y-2">
-            <View className="flex-row items-center">
-              <View className="w-3 h-3 rounded-full bg-green-500 mr-2" />
-              <Text className="text-gray-600">已批准的请假</Text>
-            </View>
-            <View className="flex-row items-center">
-              <View className="w-3 h-3 rounded-full bg-yellow-500 mr-2" />
-              <Text className="text-gray-600">待审批的请假</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* 选中日期的请假记录 */}
-        {selectedDate && (
-          <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
-            <Text className="text-lg font-bold mb-4">
-              {new Date(selectedDate).toLocaleDateString()} 的请假记录
-            </Text>
-            {getSelectedDateRequests().length > 0 ? (
-              getSelectedDateRequests().map(request => (
-                <TouchableOpacity
-                  key={request.id}
-                  className="border-b border-gray-100 py-3"
-                  onPress={() => router.push(`/leave-request/${request.id}`)}
-                >
-                  <View className="flex-row justify-between items-center">
-                    <Text className="font-bold">{request.leaveType}</Text>
-                    <Text
-                      className={`${
-                        request.status === 'approved'
-                          ? 'text-green-600'
-                          : 'text-yellow-600'
-                      }`}
-                    >
-                      {request.status === 'approved' ? '已批准' : '待审批'}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))
-            ) : (
-              <Text className="text-gray-500">当天没有请假记录</Text>
-            )}
-          </View>
-        )}
+    <View className="flex-1 bg-gray-50">
+      <View className="p-4">
+        <TouchableOpacity
+          className="h-12 bg-blue-500 rounded-lg justify-center items-center shadow-sm flex-row"
+          onPress={() => {
+            // 处理查看日历的逻辑
+          }}
+        >
+          <Ionicons name="calendar-outline" size={24} color="white" style={{ marginRight: 8 }} />
+          <Text className="text-white font-bold text-base">查看日历</Text>
+        </TouchableOpacity>
       </View>
-    </ScrollView>
+      <ScrollView className="flex-1 bg-gray-50">
+        <View className="p-5">
+          {/* 日历视图 */}
+          <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
+            <Calendar
+              onDayPress={day => setSelectedDate(day.dateString)}
+              markedDates={getMarkedDates()}
+              theme={{
+                todayTextColor: '#2563eb',
+                selectedDayBackgroundColor: '#2563eb',
+                selectedDayTextColor: '#ffffff',
+              }}
+            />
+          </View>
+
+          {/* 图例说明 */}
+          <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
+            <Text className="text-lg font-bold mb-4">图例说明</Text>
+            <View className="space-y-2">
+              <View className="flex-row items-center">
+                <View className="w-3 h-3 rounded-full bg-green-500 mr-2" />
+                <Text className="text-gray-600">已批准的请假</Text>
+              </View>
+              <View className="flex-row items-center">
+                <View className="w-3 h-3 rounded-full bg-yellow-500 mr-2" />
+                <Text className="text-gray-600">待审批的请假</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* 选中日期的请假记录 */}
+          {selectedDate && (
+            <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
+              <Text className="text-lg font-bold mb-4">
+                {new Date(selectedDate).toLocaleDateString()} 的请假记录
+              </Text>
+              {getSelectedDateRequests().length > 0 ? (
+                getSelectedDateRequests().map(request => (
+                  <TouchableOpacity
+                    key={request.id}
+                    className="border-b border-gray-100 py-3"
+                    onPress={() => router.push(`/leave-request/${request.id}`)}
+                  >
+                    <View className="flex-row justify-between items-center">
+                      <Text className="font-bold">{request.leaveType}</Text>
+                      <Text
+                        className={`${
+                          request.status === 'approved'
+                            ? 'text-green-600'
+                            : 'text-yellow-600'
+                        }`}
+                      >
+                        {request.status === 'approved' ? '已批准' : '待审批'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text className="text-gray-500">当天没有请假记录</Text>
+              )}
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </View>
   );
 } 
