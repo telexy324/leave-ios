@@ -1,6 +1,6 @@
 import { leaveBalanceApi } from '@/lib/leaveBalance';
 import { Ionicons } from '@expo/vector-icons';
-import { yupResolver } from '@hookform/resolvers/yup';
+import { zodResolver } from '@hookform/resolvers/zod';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -8,18 +8,22 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import * as yup from 'yup';
+import { z } from 'zod';
 
-// 表单验证 schema
-const schema = yup.object().shape({
-  leaveType: yup.number().required('请选择请假类型'),
-  startDate: yup.date().required('请选择开始时间'),
-  endDate: yup.date().required('请选择结束时间'),
-  reason: yup.string().required('请输入请假原因'),
-  proof: yup.mixed().optional(),
+// 定义表单验证 schema
+const schema = z.object({
+  leaveType: z.number().min(1, '请选择请假类型'),
+  startDate: z.date({
+    required_error: '请选择开始时间',
+  }),
+  endDate: z.date({
+    required_error: '请选择结束时间',
+  }),
+  reason: z.string().min(8, '请假原因至少8个字符'),
+  proof: z.string().optional(),
 });
 
-type FormData = yup.InferType<typeof schema>;
+type FormData = z.infer<typeof schema>;
 
 interface LeaveType {
   id: number;
@@ -41,14 +45,19 @@ export default function NewLeaveRequestScreen() {
   });
 
   // 初始化表单
-  const { control, handleSubmit, formState: { errors }, watch } = useForm<FormData>({
-    resolver: yupResolver(schema),
+  const {
+    control,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
     defaultValues: {
       leaveType: undefined,
-      startDate: new Date(),
-      endDate: new Date(),
+      startDate: undefined,
+      endDate: undefined,
       reason: '',
-      proof: '',
+      proof: undefined,
     },
   });
 
@@ -104,15 +113,14 @@ export default function NewLeaveRequestScreen() {
       const leaveDays = calculateLeaveDays(data.startDate, data.endDate);
       
       const formattedData = {
-        ...data,
         type: data.leaveType as 1 | 2 | 3 | 4 | 5,
         startDate: format(data.startDate, 'yyyy-MM-dd HH:mm'),
         endDate: format(data.endDate, 'yyyy-MM-dd HH:mm'),
         amount: leaveDays.toString(),
-        status: 1,
+        status: 1 as const,
+        reason: data.reason,
         proof: data.proof || undefined,
       };
-      console.log('提交的数据:', formattedData);
       await leaveBalanceApi.createLeaveRequest(formattedData)
       router.back();
     } catch (error) {
