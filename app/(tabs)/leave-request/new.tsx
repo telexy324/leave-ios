@@ -114,13 +114,14 @@ export default function NewLeaveRequestScreen() {
       
       const formattedData = {
         type: data.leaveType as 1 | 2 | 3 | 4 | 5,
-        startDate: format(data.startDate, 'yyyy-MM-dd HH:mm'),
-        endDate: format(data.endDate, 'yyyy-MM-dd HH:mm'),
+        startDate: format(data.startDate, 'yyyy-MM-dd HH:mm:ss'),
+        endDate: format(data.endDate, 'yyyy-MM-dd HH:mm:ss'),
         amount: leaveDays.toString(),
         status: 1 as const,
         reason: data.reason,
         proof: data.proof || undefined,
       };
+      console.log(formattedData)
       await leaveBalanceApi.createLeaveRequest(formattedData)
       router.back();
     } catch (error) {

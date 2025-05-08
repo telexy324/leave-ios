@@ -10,13 +10,21 @@ export default function HomeScreen() {
   const user = useAuthStore(state => state.user);
 
   // 使用 React Query 获取假期统计
-  const { data: leaveStats, isLoading } = useQuery({
+  const { data: leaveStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['leaveStats'],
     queryFn: () => leaveBalanceApi.getLeaveStats(),
   });
 
+  // 使用 React Query 获取假期统计
+  const { data: leaveRecent, isLoading: isLoadingRecent } = useQuery({
+    queryKey: ['leaveRecent'],
+    queryFn: () => leaveBalanceApi.getLeaveRequests({
+
+    }),
+  });
+
   // 如果数据正在加载，可以显示加载状态
-  if (isLoading) {
+  if (isLoadingStats || isLoadingRecent) {
     return (
       <View className="flex-1 justify-center items-center">
         <Text>加载中...</Text>
