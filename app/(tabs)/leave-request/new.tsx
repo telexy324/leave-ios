@@ -1,29 +1,54 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
+import { leaveBalanceApi } from '@/lib/leaveBalance';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import FileUpload from '../../components/FileUpload';
 
 interface LeaveType {
-  id: string;
+  id: number;
   name: string;
   remainingDays: number;
 }
 
-// 模拟数据
-const mockLeaveTypes: LeaveType[] = [
-  { id: '1', name: '年假', remainingDays: 10 },
-  { id: '2', name: '病假', remainingDays: 15 },
-  { id: '3', name: '事假', remainingDays: 5 },
-];
-
 export default function NewLeaveRequestScreen() {
   const router = useRouter();
-  const [selectedLeaveType, setSelectedLeaveType] = useState<string>('');
+  const [selectedLeaveType, setSelectedLeaveType] = useState<number>(0);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [reason, setReason] = useState('');
   const [attachments, setAttachments] = useState<Array<{ name: string; uri: string }>>([]);
+
+  // 使用 React Query 获取假期统计
+  const { data: leaveStats, isLoading } = useQuery({
+    queryKey: ['leaveStats'],
+    queryFn: () => leaveBalanceApi.getLeaveStats(),
+  });
+
+  // 将后端数据转换为前端需要的格式
+  const leaveTypes: LeaveType[] = [
+    {
+      id: 2, // 年假
+      name: '年假',
+      remainingDays: (leaveStats?.totalAnnualLeaves || 0) - (leaveStats?.usedAnnualLeaves || 0),
+    },
+    {
+      id: 3, // 病假
+      name: '病假',
+      remainingDays: (leaveStats?.totalSickLeaves || 0) - (leaveStats?.usedSickLeaves || 0),
+    },
+    {
+      id: 4, // 事假
+      name: '事假',
+      remainingDays: (leaveStats?.totalPersonalLeaves || 0) - (leaveStats?.usedPersonalLeaves || 0),
+    },
+    {
+      id: 1, // 调休
+      name: '调休',
+      remainingDays: (leaveStats?.totalCompensatoryLeaves || 0) - (leaveStats?.usedCompensatoryLeaves || 0),
+    },
+  ];
 
   const handleSubmit = () => {
     // TODO: 实现提交逻辑，发送到后端
@@ -43,30 +68,36 @@ export default function NewLeaveRequestScreen() {
         {/* 请假类型选择 */}
         <View className="mb-5">
           <Text className="text-lg font-bold mb-3">请假类型</Text>
-          <View className="flex-row space-x-3">
-            {mockLeaveTypes.map(type => (
-              <TouchableOpacity
-                key={type.id}
-                className={`flex-1 py-3 px-4 rounded-lg border ${
-                  selectedLeaveType === type.id
-                    ? 'border-primary bg-primary/10'
-                    : 'border-gray-200 bg-white'
-                }`}
-                onPress={() => setSelectedLeaveType(type.id)}
-              >
-                <Text
-                  className={`text-center font-bold ${
-                    selectedLeaveType === type.id ? 'text-primary' : 'text-gray-600'
+          {isLoading ? (
+            <View className="items-center py-4">
+              <Text className="text-gray-500">加载中...</Text>
+            </View>
+          ) : (
+            <View className="flex-row flex-wrap gap-3">
+              {leaveTypes.map(type => (
+                <TouchableOpacity
+                  key={type.id}
+                  className={`flex-1 py-3 px-4 rounded-lg border ${
+                    selectedLeaveType === type.id
+                      ? 'border-primary bg-primary/10'
+                      : 'border-gray-200 bg-white'
                   }`}
+                  onPress={() => setSelectedLeaveType(type.id)}
                 >
-                  {type.name}
-                </Text>
-                <Text className="text-center text-gray-500 text-sm mt-1">
-                  剩余 {type.remainingDays} 天
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+                  <Text
+                    className={`text-center font-bold ${
+                      selectedLeaveType === type.id ? 'text-primary' : 'text-gray-600'
+                    }`}
+                  >
+                    {type.name}
+                  </Text>
+                  <Text className="text-center text-gray-500 text-sm mt-1">
+                    剩余 {type.remainingDays} 天
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* 请假时间选择 */}
