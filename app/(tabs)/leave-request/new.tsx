@@ -1,10 +1,25 @@
 import { leaveBalanceApi } from '@/lib/leaveBalance';
+import { Ionicons } from '@expo/vector-icons';
+import { yupResolver } from '@hookform/resolvers/yup';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import FileUpload from '../../components/FileUpload';
+import * as yup from 'yup';
+
+// 表单验证 schema
+const schema = yup.object().shape({
+  leaveType: yup.number().required('请选择请假类型'),
+  startDate: yup.date().required('请选择开始时间'),
+  endDate: yup.date().required('请选择结束时间'),
+  reason: yup.string().required('请输入请假原因'),
+  proof: yup.mixed().optional(),
+});
+
+type FormData = yup.InferType<typeof schema>;
 
 interface LeaveType {
   id: number;
@@ -14,16 +29,27 @@ interface LeaveType {
 
 export default function NewLeaveRequestScreen() {
   const router = useRouter();
-  const [selectedLeaveType, setSelectedLeaveType] = useState<number>(0);
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
-  const [reason, setReason] = useState('');
-  const [attachments, setAttachments] = useState<Array<{ name: string; uri: string }>>([]);
+  const [attachments, setAttachments] = React.useState<Array<{ name: string; uri: string }>>([]);
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 使用 React Query 获取假期统计
   const { data: leaveStats, isLoading } = useQuery({
     queryKey: ['leaveStats'],
     queryFn: () => leaveBalanceApi.getLeaveStats(),
+  });
+
+  // 初始化表单
+  const { control, handleSubmit, formState: { errors }, watch } = useForm<FormData>({
+    resolver: yupResolver(schema),
+    defaultValues: {
+      leaveType: undefined,
+      startDate: new Date(),
+      endDate: new Date(),
+      reason: '',
+      proof: '',
+    },
   });
 
   // 将后端数据转换为前端需要的格式
@@ -50,16 +76,50 @@ export default function NewLeaveRequestScreen() {
     },
   ];
 
-  const handleSubmit = () => {
-    // TODO: 实现提交逻辑，发送到后端
-    console.log('Submit:', {
-      leaveType: selectedLeaveType,
-      startDate,
-      endDate,
-      reason,
-      attachments,
-    });
-    router.back();
+  // 添加计算请假天数的函数
+  const calculateLeaveDays = (startDate: Date, endDate: Date): number => {
+    const diffInHours = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
+    
+    // 如果时间差小于等于0，返回0
+    if (diffInHours <= 0) return 0;
+    
+    // 计算完整的天数
+    const fullDays = Math.floor(diffInHours / 24);
+    
+    // 计算剩余的小时数
+    const remainingHours = diffInHours % 24;
+    
+    // 如果剩余时间超过8小时，算作一天
+    if (remainingHours >= 8) {
+      return fullDays + 1;
+    }
+    
+    // 如果剩余时间不足8小时，按小时计算
+    return fullDays + Math.floor(remainingHours / 8);
+  };
+
+  const onSubmit = async (data: FormData) => {
+    try {
+      setIsSubmitting(true);
+      const leaveDays = calculateLeaveDays(data.startDate, data.endDate);
+      
+      const formattedData = {
+        ...data,
+        type: data.leaveType as 1 | 2 | 3 | 4 | 5,
+        startDate: format(data.startDate, 'yyyy-MM-dd HH:mm'),
+        endDate: format(data.endDate, 'yyyy-MM-dd HH:mm'),
+        amount: leaveDays.toString(),
+        status: 1,
+        proof: data.proof || undefined,
+      };
+      console.log('提交的数据:', formattedData);
+      await leaveBalanceApi.createLeaveRequest(formattedData)
+      router.back();
+    } catch (error) {
+      console.error('提交失败:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -75,86 +135,187 @@ export default function NewLeaveRequestScreen() {
           ) : (
             <View className="flex-row flex-wrap gap-3">
               {leaveTypes.map(type => (
-                <TouchableOpacity
+                <Controller
                   key={type.id}
-                  className={`flex-1 py-3 px-4 rounded-lg border ${
-                    selectedLeaveType === type.id
-                      ? 'border-primary bg-primary/10'
-                      : 'border-gray-200 bg-white'
-                  }`}
-                  onPress={() => setSelectedLeaveType(type.id)}
-                >
-                  <Text
-                    className={`text-center font-bold ${
-                      selectedLeaveType === type.id ? 'text-primary' : 'text-gray-600'
-                    }`}
-                  >
-                    {type.name}
-                  </Text>
-                  <Text className="text-center text-gray-500 text-sm mt-1">
-                    剩余 {type.remainingDays} 天
-                  </Text>
-                </TouchableOpacity>
+                  control={control}
+                  name="leaveType"
+                  render={({ field: { onChange, value } }) => (
+                    <TouchableOpacity
+                      className={`flex-1 py-3 px-4 rounded-lg border ${
+                        value === type.id
+                          ? 'border-primary bg-primary/10'
+                          : 'border-gray-200 bg-white'
+                      }`}
+                      onPress={() => onChange(type.id)}
+                    >
+                      <Text
+                        className={`text-center font-bold ${
+                          value === type.id ? 'text-primary' : 'text-gray-600'
+                        }`}
+                      >
+                        {type.name}
+                      </Text>
+                      <Text className="text-center text-gray-500 text-sm mt-1">
+                        剩余 {type.remainingDays} 天
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                />
               ))}
             </View>
+          )}
+          {errors.leaveType && (
+            <Text className="text-red-500 text-sm mt-1">{errors.leaveType.message}</Text>
           )}
         </View>
 
         {/* 请假时间选择 */}
-        <View className="mb-5">
-          <Text className="text-lg font-bold mb-3">请假时间</Text>
-          <View className="space-y-3">
-            <View>
-              <Text className="text-gray-600 mb-1">开始时间</Text>
-              <DateTimePicker
-                value={startDate}
-                mode="date"
-                display="default"
-                onChange={(event, date) => date && setStartDate(date)}
-              />
-            </View>
-            <View>
-              <Text className="text-gray-600 mb-1">结束时间</Text>
-              <DateTimePicker
-                value={endDate}
-                mode="date"
-                display="default"
-                onChange={(event, date) => date && setEndDate(date)}
-              />
-            </View>
-          </View>
+        <View className="mb-4">
+          <Text className="text-gray-600 mb-2">开始时间</Text>
+          <Controller
+            control={control}
+            name="startDate"
+            render={({ field: { onChange, value } }) => (
+              <>
+                <TouchableOpacity
+                  className="h-12 px-4 bg-gray-50 rounded-lg border border-gray-200 justify-center"
+                  onPress={() => setShowStartPicker(true)}
+                >
+                  <Text className="text-gray-900">
+                    {value ? format(value, 'yyyy-MM-dd HH:mm') : '请选择开始时间'}
+                  </Text>
+                </TouchableOpacity>
+                {showStartPicker && (
+                  <DateTimePicker
+                    value={value || new Date()}
+                    mode="datetime"
+                    display="spinner"
+                    onChange={(event, selectedDate) => {
+                      setShowStartPicker(false);
+                      if (selectedDate) {
+                        onChange(selectedDate);
+                      }
+                    }}
+                    minimumDate={new Date()}
+                    minuteInterval={30}
+                  />
+                )}
+              </>
+            )}
+          />
+          {errors.startDate && (
+            <Text className="text-red-500 text-sm mt-1">{errors.startDate.message}</Text>
+          )}
         </View>
 
-        {/* 请假原因 */}
-        <View className="mb-5">
-          <Text className="text-lg font-bold mb-3">请假原因</Text>
-          <TextInput
-            className="bg-white p-4 rounded-lg border border-gray-200 min-h-[120px]"
-            multiline
-            placeholder="请输入请假原因..."
-            value={reason}
-            onChangeText={setReason}
+        <View className="mb-4">
+          <Text className="text-gray-600 mb-2">结束时间</Text>
+          <Controller
+            control={control}
+            name="endDate"
+            render={({ field: { onChange, value } }) => (
+              <>
+                <TouchableOpacity
+                  className="h-12 px-4 bg-gray-50 rounded-lg border border-gray-200 justify-center"
+                  onPress={() => setShowEndPicker(true)}
+                >
+                  <Text className="text-gray-900">
+                    {value ? format(value, 'yyyy-MM-dd HH:mm') : '请选择结束时间'}
+                  </Text>
+                </TouchableOpacity>
+                {showEndPicker && (
+                  <DateTimePicker
+                    value={value || new Date()}
+                    mode="datetime"
+                    display="spinner"
+                    onChange={(event, selectedDate) => {
+                      setShowEndPicker(false);
+                      if (selectedDate) {
+                        onChange(selectedDate);
+                      }
+                    }}
+                    minimumDate={watch('startDate') || new Date()}
+                    minuteInterval={30}
+                  />
+                )}
+              </>
+            )}
           />
+          {errors.endDate && (
+            <Text className="text-red-500 text-sm mt-1">{errors.endDate.message}</Text>
+          )}
+        </View>
+
+        {/* 显示计算出的请假天数 */}
+        {watch('startDate') && watch('endDate') && (
+          <View className="mb-4">
+            <Text className="text-gray-600 mb-2">请假天数</Text>
+            <View className="h-12 px-4 bg-gray-50 rounded-lg border border-gray-200 justify-center">
+              <Text className="text-gray-900">
+                {calculateLeaveDays(watch('startDate'), watch('endDate'))} 天
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* 请假原因 */}
+        <View className="mb-4">
+          <Text className="text-gray-600 mb-2">请假原因</Text>
+          <Controller
+            control={control}
+            name="reason"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                className="h-24 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200"
+                placeholder="请输入请假原因"
+                multiline
+                textAlignVertical="top"
+                value={value}
+                onChangeText={onChange}
+              />
+            )}
+          />
+          {errors.reason && (
+            <Text className="text-red-500 text-sm mt-1">{errors.reason.message}</Text>
+          )}
         </View>
 
         {/* 附件上传 */}
-        <View className="mb-5">
-          <Text className="text-lg font-bold mb-3">附件上传</Text>
-          <FileUpload
-            value={attachments}
-            onChange={setAttachments}
-            maxFiles={3}
-            allowedTypes={['image/*', 'application/pdf']}
+        <View className="mb-4">
+          <Text className="text-gray-600 mb-2">上传附件（选填）</Text>
+          <Controller
+            control={control}
+            name="proof"
+            render={({ field: { onChange, value } }) => (
+              <TouchableOpacity
+                className="h-24 border-2 border-dashed border-gray-300 rounded-lg justify-center items-center"
+                onPress={() => {
+                  // 处理文件上传
+                }}
+              >
+                <View className="items-center">
+                  <Ionicons name="cloud-upload-outline" size={24} color="#6B7280" />
+                  <Text className="text-gray-500 mt-2">点击上传附件</Text>
+                </View>
+              </TouchableOpacity>
+            )}
           />
         </View>
 
         {/* 提交按钮 */}
-        <TouchableOpacity
-          className="h-12 bg-primary rounded-lg justify-center items-center"
-          onPress={handleSubmit}
-        >
-          <Text className="text-white font-bold text-base">提交申请</Text>
-        </TouchableOpacity>
+        <View className="mt-6 mb-8">
+          <TouchableOpacity
+            className={`h-12 rounded-lg justify-center items-center ${
+              isSubmitting ? 'bg-gray-400' : 'bg-blue-500'
+            }`}
+            onPress={handleSubmit(onSubmit)}
+            disabled={isSubmitting}
+          >
+            <Text className="text-white font-bold text-base">
+              {isSubmitting ? '提交中...' : '提交申请'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </ScrollView>
   );

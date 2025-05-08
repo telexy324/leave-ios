@@ -5,7 +5,7 @@ import { request, RequestOptions } from './api';
 export const leaveBalanceApi = {
   // 创建请假申请
   createLeaveRequest: (body: LeaveDto, options?: RequestOptions) => {
-    return request<LeaveEntity>('/api/leaves', {
+    return request<void>('/api/leaves', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
