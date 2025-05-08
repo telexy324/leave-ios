@@ -1,12 +1,27 @@
+import { leaveBalanceApi } from '@/lib/leaveBalance';
 import { useAuthStore } from '@/lib/store/auth';
-import { useLeaveStore } from '@/lib/store/leave';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const leaveStats = useLeaveStore(state => state.leaveStats);
   const user = useAuthStore(state => state.user);
+
+  // 使用 React Query 获取假期统计
+  const { data: leaveStats, isLoading } = useQuery({
+    queryKey: ['leaveStats'],
+    queryFn: () => leaveBalanceApi.getLeaveStats(),
+  });
+
+  // 如果数据正在加载，可以显示加载状态
+  if (isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text>加载中...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView className="flex-1 bg-gray-50">
@@ -23,15 +38,21 @@ export default function HomeScreen() {
           <Text className="text-lg font-bold mb-4">假期统计</Text>
           <View className="flex-row justify-between">
             <View className="flex-1 items-center">
-              <Text className="text-2xl font-bold text-primary">{leaveStats?.totalAnnualLeaves}</Text>
+              <Text className="text-2xl font-bold text-primary">
+                {(leaveStats?.totalAnnualLeaves || 0) - (leaveStats?.usedAnnualLeaves || 0)}
+              </Text>
               <Text className="text-gray-600">年假剩余</Text>
             </View>
             <View className="flex-1 items-center">
-              <Text className="text-2xl font-bold text-primary">{leaveStats?.totalSickLeaves}</Text>
+              <Text className="text-2xl font-bold text-primary">
+                {(leaveStats?.totalSickLeaves || 0) - (leaveStats?.usedSickLeaves || 0)}
+              </Text>
               <Text className="text-gray-600">病假剩余</Text>
             </View>
             <View className="flex-1 items-center">
-              <Text className="text-2xl font-bold text-primary">{leaveStats?.totalCompensatoryLeaves}</Text>
+              <Text className="text-2xl font-bold text-primary">
+                {(leaveStats?.totalCompensatoryLeaves || 0) - (leaveStats?.usedCompensatoryLeaves || 0)}
+              </Text>
               <Text className="text-gray-600">调休剩余</Text>
             </View>
           </View>
