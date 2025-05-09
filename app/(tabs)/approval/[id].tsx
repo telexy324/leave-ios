@@ -156,15 +156,15 @@ export default function ApprovalDetailScreen() {
 
           {/* 审批操作按钮 */}
           {leaveRequest.status === 1 && (
-            <View className="flex-row space-x-4">
+            <View className="flex-row justify-between">
               <TouchableOpacity
-                className="flex-1 bg-green-500 py-3 rounded-lg"
+                className="w-[48%] bg-green-500 py-3 rounded-lg"
                 onPress={handleApprove}
               >
                 <Text className="text-white text-center font-bold">通过</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                className="flex-1 bg-red-500 py-3 rounded-lg"
+                className="w-[48%] bg-red-500 py-3 rounded-lg"
                 onPress={handleReject}
               >
                 <Text className="text-white text-center font-bold">驳回</Text>
