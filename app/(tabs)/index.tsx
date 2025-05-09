@@ -5,6 +5,17 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
+// 格式化时间函数
+const formatDateTime = (isoString: string) => {
+  const date = new Date(isoString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
+};
+
 export default function HomeScreen() {
   const router = useRouter();
   const user = useAuthStore(state => state.user);
@@ -106,13 +117,13 @@ export default function HomeScreen() {
           {leaveRecent?.items?.map((request, index) => (
             <TouchableOpacity
               key={request.id}
-              className={`flex-row justify-between items-center py-3 ${
+              className={`bg-white rounded-lg p-5 mb-4 shadow-sm ${
                 index !== (leaveRecent?.items?.length || 1) - 1 ? 'border-b border-gray-100' : ''
               }`}
               onPress={() => router.push(`/leave-request/${request.id}`)}
             >
-              <View>
-                <Text className="font-bold">
+              <View className="flex-row justify-between items-start mb-3">
+                <Text className="text-lg font-bold">
                   {request.type === 1
                     ? '调休'
                     : request.type === 2
@@ -123,40 +134,64 @@ export default function HomeScreen() {
                     ? '事假'
                     : '其他'}
                 </Text>
-                <Text className="text-sm text-gray-600">
-                  {request.startDate} 至 {request.endDate}
-                </Text>
-              </View>
-              <View
-                className={`px-2.5 py-1 rounded ${
-                  request.status === 2
-                    ? 'bg-success/10'
-                    : request.status === 3
-                    ? 'bg-danger/10'
-                    : request.status === 4
-                    ? 'bg-gray-100'
-                    : 'bg-warning/10'
-                }`}
-              >
-                <Text
-                  className={`text-sm ${
+                <View
+                  className={`px-3 py-1 rounded ${
                     request.status === 2
-                      ? 'text-success'
+                      ? 'bg-green-100'
                       : request.status === 3
-                      ? 'text-danger'
+                      ? 'bg-red-100'
                       : request.status === 4
-                      ? 'text-gray-600'
-                      : 'text-warning'
+                      ? 'bg-gray-100'
+                      : 'bg-yellow-100'
                   }`}
                 >
-                  {request.status === 2
-                    ? '已通过'
-                    : request.status === 3
-                    ? '已驳回'
-                    : request.status === 4
-                    ? '已取消'
-                    : '待审批'}
-                </Text>
+                  <Text
+                    className={`font-bold ${
+                      request.status === 2
+                        ? 'text-green-600'
+                        : request.status === 3
+                        ? 'text-red-600'
+                        : request.status === 4
+                        ? 'text-gray-600'
+                        : 'text-yellow-600'
+                    }`}
+                  >
+                    {request.status === 2
+                      ? '已通过'
+                      : request.status === 3
+                      ? '已驳回'
+                      : request.status === 4
+                      ? '已取消'
+                      : '待审批'}
+                  </Text>
+                </View>
+              </View>
+
+              <View className="space-y-2">
+                <View className="flex-row justify-between">
+                  <Text className="text-gray-600 flex-shrink-0 mr-2">请假时间</Text>
+                  <Text className="font-bold flex-1 text-right" numberOfLines={1}>
+                    {formatDateTime(request.startDate)} 至 {formatDateTime(request.endDate)}
+                  </Text>
+                </View>
+                <View className="flex-row justify-between">
+                  <Text className="text-gray-600 flex-shrink-0 mr-2">请假天数</Text>
+                  <Text className="font-bold flex-1 text-right">
+                    {request.amount} 天
+                  </Text>
+                </View>
+                <View className="flex-row justify-between">
+                  <Text className="text-gray-600 flex-shrink-0 mr-2">申请时间</Text>
+                  <Text className="font-bold flex-1 text-right">
+                    {formatDateTime(request.createdAt)}
+                  </Text>
+                </View>
+                {request.reason && (
+                  <View>
+                    <Text className="text-gray-600 mb-1">请假原因</Text>
+                    <Text className="text-base" numberOfLines={2}>{request.reason}</Text>
+                  </View>
+                )}
               </View>
             </TouchableOpacity>
           ))}
