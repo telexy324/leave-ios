@@ -79,7 +79,7 @@ export const leaveBalanceApi = {
   ) => {
     const { id: param0, ...queryParams } = params;
     return request<void>(`/api/leaves/${param0}/cancel`, {
-      method: 'POST',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -95,7 +95,7 @@ export const leaveBalanceApi = {
   )=> {
     const { id: param0, ...queryParams } = params;
     return request<any>(`/api/leaves/${param0}/approve`, {
-      method: 'POST',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -113,7 +113,7 @@ export const leaveBalanceApi = {
   )=> {
     const { id: param0, ...queryParams } = params;
     return request<any>(`/api/leaves/${param0}/reject`, {
-      method: 'POST',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },

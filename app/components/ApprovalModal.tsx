@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  Modal,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 interface ApprovalModalProps {
@@ -40,7 +40,7 @@ export default function ApprovalModal({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 justify-center items-center bg-black/50"
       >
-        <View className="w-[90%] max-w-[400px] bg-white rounded-lg p-5">
+        <View className="w-[90%] max-w-[400px] bg-white rounded-lg p-5 shadow-lg">
           <Text className="text-lg font-bold mb-4">
             {type === 'approve' ? '审批通过' : '审批拒绝'}
           </Text>
@@ -52,18 +52,19 @@ export default function ApprovalModal({
             value={comment}
             onChangeText={setComment}
           />
-          <View className="flex-row space-x-3">
+          <View className="flex-row justify-between">
             <TouchableOpacity
-              className="flex-1 h-12 bg-gray-200 rounded-lg justify-center items-center"
+              className="w-[48%] h-12 bg-gray-200 rounded-lg justify-center items-center"
               onPress={onClose}
             >
               <Text className="text-gray-800 font-bold text-base">取消</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              className={`flex-1 h-12 rounded-lg justify-center items-center ${
-                type === 'approve' ? 'bg-primary' : 'bg-red-500'
+              className={`w-[48%] h-12 rounded-lg justify-center items-center ${
+                type === 'approve' ? 'bg-blue-500' : 'bg-red-500'
               }`}
               onPress={handleSubmit}
+              style={{ elevation: 2 }}
             >
               <Text className="text-white font-bold text-base">确定</Text>
             </TouchableOpacity>
