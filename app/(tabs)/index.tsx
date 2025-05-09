@@ -26,7 +26,7 @@ export default function HomeScreen() {
     queryFn: () => leaveBalanceApi.getLeaveStats(),
   });
 
-  // 使用 React Query 获取假期统计
+  // 使用 React Query 获取最近请假记录
   const { data: leaveRecent, isLoading: isLoadingRecent } = useQuery({
     queryKey: ['leaveRecent'],
     queryFn: () => leaveBalanceApi.getLeaveRequests({

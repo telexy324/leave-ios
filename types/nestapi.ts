@@ -1204,7 +1204,7 @@ export interface TodoUpdateDto {
 export interface LeaveEntity {
   /** status: 1:PENDING, 2:APPROVED, 3:REJECTED, 4:CANCELLED */
   status: number;
-  /** status: 1:COMPENSATE, 2:ANNUAL, 3:SICK, 4:PERSONAL, 5:OTHER */
+  /** type: 1:COMPENSATE, 2:ANNUAL, 3:SICK, 4:PERSONAL, 5:OTHER */
   type: number;
   /**
    * 开始时间

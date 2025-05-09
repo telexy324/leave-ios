@@ -14,4 +14,14 @@ declare namespace API {
     endDate?: string;
     _t?: number;
   };
+
+  type PageResponse<T> = {
+    items: T[];
+    meta: {
+      currentPage: number;
+      totalPages: number;
+      totalItems: number;
+      itemsPerPage: number;
+    };
+  }
 }
