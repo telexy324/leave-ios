@@ -43,7 +43,7 @@ export default function HomeScreen() {
         </View>
 
         {/* 请假统计卡片 */}
-        <View className="bg-white rounded-lg shadow-sm mx-4 mt-4 p-4">
+        <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
           <Text className="text-lg font-bold mb-4">请假统计</Text>
           <View className="flex-row justify-between">
             <View className="flex-1 items-center">
@@ -68,7 +68,7 @@ export default function HomeScreen() {
         </View>
 
         {/* 快捷操作卡片 */}
-        <View className="bg-white rounded-lg shadow-sm mx-4 mt-4 p-4">
+        <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
           <Text className="text-lg font-bold mb-4">快捷操作</Text>
           <View className="flex-row justify-between">
             {/* 申请请假按钮 */}
@@ -101,44 +101,60 @@ export default function HomeScreen() {
         </View>
 
         {/* 最近请假记录 */}
-        <View className="bg-white rounded-lg shadow-sm mx-4 mt-4 p-4 mb-4">
+        <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
           <Text className="text-lg font-bold mb-4">最近请假记录</Text>
-          {leaveStats?.recentRequests?.map((request, index) => (
+          {leaveRecent?.items?.map((request, index) => (
             <TouchableOpacity
               key={request.id}
               className={`flex-row justify-between items-center py-3 ${
-                index !== leaveStats.recentRequests.length - 1 ? 'border-b border-gray-100' : ''
+                index !== (leaveRecent?.items?.length || 1) - 1 ? 'border-b border-gray-100' : ''
               }`}
               onPress={() => router.push(`/leave-request/${request.id}`)}
             >
               <View>
-                <Text className="font-bold">{request.type}</Text>
+                <Text className="font-bold">
+                  {request.type === 1
+                    ? '调休'
+                    : request.type === 2
+                    ? '年假'
+                    : request.type === 3
+                    ? '病假'
+                    : request.type === 4
+                    ? '事假'
+                    : '其他'}
+                </Text>
                 <Text className="text-sm text-gray-600">
                   {request.startDate} 至 {request.endDate}
                 </Text>
               </View>
               <View
                 className={`px-2.5 py-1 rounded ${
-                  request.status === 'approved'
+                  request.status === 2
                     ? 'bg-success/10'
-                    : request.status === 'rejected'
+                    : request.status === 3
                     ? 'bg-danger/10'
+                    : request.status === 4
+                    ? 'bg-gray-100'
                     : 'bg-warning/10'
                 }`}
               >
                 <Text
                   className={`text-sm ${
-                    request.status === 'approved'
+                    request.status === 2
                       ? 'text-success'
-                      : request.status === 'rejected'
+                      : request.status === 3
                       ? 'text-danger'
+                      : request.status === 4
+                      ? 'text-gray-600'
                       : 'text-warning'
                   }`}
                 >
-                  {request.status === 'approved'
+                  {request.status === 2
                     ? '已通过'
-                    : request.status === 'rejected'
+                    : request.status === 3
                     ? '已驳回'
+                    : request.status === 4
+                    ? '已取消'
                     : '待审批'}
                 </Text>
               </View>
