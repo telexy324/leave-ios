@@ -1,32 +1,8 @@
 import { leaveBalanceApi } from "@/lib/leaveBalance";
-import { LeaveEntity } from '@/types/nestapi';
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import ApprovalModal from '../../components/ApprovalModal';
-import PageResponse = API.PageResponse;
-
-// interface LeaveEntity {
-//   id: number;
-//   type: number;
-//   status: number;
-//   startDate: string;
-//   endDate: string;
-//   amount: number;
-//   reason?: string;
-//   createdAt: string;
-// }
-
-// interface LeaveResponse {
-//   items: LeaveEntity[];
-//   meta: {
-//     currentPage: number;
-//     totalPages: number;
-//     totalItems: number;
-//     itemsPerPage: number;
-//   };
-// }
 
 // 格式化时间函数
 const formatDateTime = (isoString: string) => {
@@ -39,12 +15,56 @@ const formatDateTime = (isoString: string) => {
   return `${year}-${month}-${day} ${hours}:${minutes}`;
 };
 
+const getStatusColor = (status: number) => {
+  switch (status) {
+    case 1:
+      return 'bg-yellow-100 text-yellow-600';
+    case 2:
+      return 'bg-green-100 text-green-600';
+    case 3:
+      return 'bg-red-100 text-red-600';
+    case 4:
+      return 'bg-gray-100 text-gray-600';
+    default:
+      return 'bg-yellow-100 text-yellow-600';
+  }
+};
+
+const getStatusText = (status: number) => {
+  switch (status) {
+    case 1:
+      return '待审批';
+    case 2:
+      return '已通过';
+    case 3:
+      return '已驳回';
+    case 4:
+      return '已取消';
+    default:
+      return '待审批';
+  }
+};
+
+const getLeaveTypeText = (type: number) => {
+  switch (type) {
+    case 1:
+      return '调休';
+    case 2:
+      return '年假';
+    case 3:
+      return '病假';
+    case 4:
+      return '事假';
+    case 5:
+      return '其他';
+    default:
+      return '其他';
+  }
+};
+
 export default function ApprovalScreen() {
   const router = useRouter();
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState<'approve' | 'reject'>('approve');
-  const [selectedRequestId, setSelectedRequestId] = useState<string>('');
   const pageSize = 10;
 
   // 使用 React Query 获取请假记录
@@ -57,21 +77,15 @@ export default function ApprovalScreen() {
   } = useInfiniteQuery({
     queryKey: ['leaves', filter],
     queryFn: async ({ pageParam = 1 }) => {
-      const response = await leaveBalanceApi.getLeaveRequests({
+      return await leaveBalanceApi.getLeaveRequests({
         page: pageParam as number,
         pageSize,
         status: filter === 'pending' ? 1 : filter === 'approved' ? 2 : filter === 'rejected' ? 3 : undefined,
-        // order: 'DESC',
-        // field: 'createdAt',
       });
-      return {
-        items: response.items as unknown as LeaveEntity[],
-        meta: response.meta
-      } as PageResponse<LeaveEntity>;
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
-      if (!lastPage.meta) return undefined;
+      if (!lastPage.meta?.currentPage || !lastPage.meta?.totalPages) return undefined;
       if (lastPage.meta.currentPage >= lastPage.meta.totalPages) return undefined;
       return lastPage.meta.currentPage + 1;
     },
@@ -98,78 +112,9 @@ export default function ApprovalScreen() {
 
   const allRequests = data?.pages.flatMap(page => page.items || []) || [];
 
-  const getStatusColor = (status: number) => {
-    switch (status) {
-      case 1:
-        return 'bg-yellow-100 text-yellow-600';
-      case 2:
-        return 'bg-green-100 text-green-600';
-      case 3:
-        return 'bg-red-100 text-red-600';
-      case 4:
-        return 'bg-gray-100 text-gray-600';
-      default:
-        return 'bg-yellow-100 text-yellow-600';
-    }
-  };
-
-  const getStatusText = (status: number) => {
-    switch (status) {
-      case 1:
-        return '待审批';
-      case 2:
-        return '已通过';
-      case 3:
-        return '已驳回';
-      case 4:
-        return '已取消';
-      default:
-        return '待审批';
-    }
-  };
-
-  const getLeaveTypeText = (type: number) => {
-    switch (type) {
-      case 1:
-        return '调休';
-      case 2:
-        return '年假';
-      case 3:
-        return '病假';
-      case 4:
-        return '事假';
-      case 5:
-        return '其他';
-      default:
-        return '其他';
-    }
-  };
-
-  const handleApprove = (id: number) => {
-    setSelectedRequestId(id.toString());
-    setModalType('approve');
-    setModalVisible(true);
-  };
-
-  const handleReject = (id: number) => {
-    setSelectedRequestId(id.toString());
-    setModalType('reject');
-    setModalVisible(true);
-  };
-
-  const handleModalSubmit = (comment: string) => {
-    // TODO: 实现审批逻辑，发送到后端
-    console.log('Submit:', {
-      requestId: selectedRequestId,
-      type: modalType,
-      comment,
-    });
-    setModalVisible(false);
-  };
-
   const handleRequestPress = (requestId: number) => {
     router.push({
-      pathname: "/(tabs)/approval",
+      pathname: "/(tabs)/approval/[id]",
       params: { id: requestId.toString() }
     });
   };
@@ -299,14 +244,6 @@ export default function ApprovalScreen() {
           )}
         </View>
       </ScrollView>
-
-      {/* 审批意见弹窗 */}
-      <ApprovalModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onSubmit={handleModalSubmit}
-        type={modalType}
-      />
     </View>
   );
 } 
