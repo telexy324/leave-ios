@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, FlatList, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
 
 export default function LeaveRequestScreen() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
@@ -118,23 +118,23 @@ export default function LeaveRequestScreen() {
       </View>
 
       {/* 状态筛选 */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="bg-white border-b border-gray-200"
-      >
-        <View className="flex-row p-2">
+      <View className="bg-white border-b border-gray-200">
+        <View className="flex-row p-3 justify-between">
           {statusOptions.map((option) => (
             <TouchableOpacity
               key={option.value}
-              className={`px-4 py-2 rounded-full mr-2 ${
-                filter === option.value ? 'bg-blue-500' : 'bg-gray-100'
+              className={`flex-1 mx-1 py-2 rounded-lg ${
+                filter === option.value 
+                  ? 'bg-blue-500' 
+                  : 'bg-gray-50'
               }`}
-              onPress={() => handleFilterChange('approved')}
+              onPress={() => handleFilterChange(option.value as typeof filter)}
             >
               <Text
-                className={`font-medium ${
-                  filter === option.value ? 'text-white' : 'text-gray-600'
+                className={`text-center font-medium ${
+                  filter === option.value 
+                    ? 'text-white' 
+                    : 'text-gray-600'
                 }`}
               >
                 {option.label}
@@ -142,7 +142,7 @@ export default function LeaveRequestScreen() {
             </TouchableOpacity>
           ))}
         </View>
-      </ScrollView>
+      </View>
 
       {/* 请假记录列表 */}
       {isLoading ? (
