@@ -1,33 +1,107 @@
+import { leaveBalanceApi } from '@/lib/leaveBalance';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { leaveBalanceApi } from '@/lib/leaveBalance';
-import { LeaveStatus } from '../../../types/leave-request';
+import { ActivityIndicator, FlatList, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 export default function LeaveRequestScreen() {
-  const [selectedStatus, setSelectedStatus] = useState<LeaveStatus | 'ALL'>('ALL');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
   const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const pageSize = 10;
 
-  // 获取请假记录列表
+  // 使用 leaveBalanceApi 的 getLeaveRequests 接口
   const { data: leaveRequests, isLoading } = useQuery({
-    queryKey: ['leaveRequests', selectedStatus, page],
-    queryFn: () => leaveBalanceApi.getLeaveRequests({
-      page,
-      pageSize,
-      status: selectedStatus === 'ALL' ? undefined : selectedStatus,
-    }),
+    queryKey: ['leaveRequests', filter, page],
+    queryFn: async () => {
+      const data = await leaveBalanceApi.getLeaveRequests({
+        page,
+        pageSize,
+        status: filter === 'pending' ? 1 : filter === 'approved' ? 2 : filter === 'rejected' ? 3 : undefined,
+      })
+      const currentTotalPage = Math.ceil((data?.meta?.totalPages || 0) / pageSize);
+      if ((data?.meta?.currentPage || 0) > currentTotalPage) {
+        setHasMore(true);
+      } else {
+        setHasMore(false);
+      }
+      return data
+    },
   });
 
   // 状态选项
-  const statusOptions: { value: LeaveStatus | 'ALL'; label: string }[] = [
-    { value: 'ALL', label: '全部' },
-    { value: 'PENDING', label: '待审批' },
-    { value: 'APPROVED', label: '已批准' },
-    { value: 'REJECTED', label: '已拒绝' },
+  const statusOptions: { value: string | 'all'; label: string }[] = [
+    { value: 'all', label: '全部' },
+    { value: 'pending', label: '待审批' },
+    { value: 'approved', label: '已批准' },
+    { value: 'rejected', label: '已拒绝' },
   ];
+
+  const handleFilterChange = (newFilter: typeof filter) => {
+    setFilter(newFilter);
+  };
+
+  // 处理加载更多
+  const handleLoadMore = () => {
+    if (hasMore) {
+      setPage(prev => prev + 1);
+    }
+  };
+
+  // 渲染加载更多指示器
+  const renderFooter = () => {
+    if (!hasMore) return null;
+    return (
+      <View className="py-4">
+        <ActivityIndicator size="small" color="#3b82f6" />
+      </View>
+    );
+  };
+
+  // 渲染空状态
+  const renderEmpty = () => (
+    <View className="flex-1 justify-center items-center py-8">
+      <Text className="text-gray-500">暂无请假记录</Text>
+    </View>
+  );
+
+  // 渲染列表项
+  const renderItem = ({ item: request }) => (
+    <TouchableOpacity
+      className="bg-white rounded-lg p-4 mb-4 shadow-sm"
+      onPress={() => router.push(`/leave-request/${request.id}`)}
+    >
+      <View className="flex-row justify-between items-start mb-2">
+        <View>
+          <Text className="text-lg font-bold mb-1">
+            {request.type === 'ANNUAL' ? '年假' :
+             request.type === 'SICK' ? '病假' :
+             request.type === 'PERSONAL' ? '事假' :
+             request.type === 'COMPENSATORY' ? '调休' : '其他'}
+          </Text>
+          <Text className="text-gray-600">
+            {new Date(request.startDate).toLocaleDateString()} 至{' '}
+            {new Date(request.endDate).toLocaleDateString()}
+          </Text>
+        </View>
+        <View className={`px-3 py-1 rounded-full ${
+          request.status === 'PENDING' ? 'bg-yellow-500' :
+          request.status === 'APPROVED' ? 'bg-green-500' :
+          request.status === 'REJECTED' ? 'bg-red-500' : 'bg-gray-500'
+        }`}>
+          <Text className="text-white text-sm">
+            {request.status === 'PENDING' ? '待审批' :
+             request.status === 'APPROVED' ? '已批准' :
+             request.status === 'REJECTED' ? '已拒绝' : '未知'}
+          </Text>
+        </View>
+      </View>
+      <Text className="text-gray-600" numberOfLines={2}>
+        {request.reason}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -54,13 +128,13 @@ export default function LeaveRequestScreen() {
             <TouchableOpacity
               key={option.value}
               className={`px-4 py-2 rounded-full mr-2 ${
-                selectedStatus === option.value ? 'bg-blue-500' : 'bg-gray-100'
+                filter === option.value ? 'bg-blue-500' : 'bg-gray-100'
               }`}
-              onPress={() => setSelectedStatus(option.value)}
+              onPress={() => handleFilterChange('approved')}
             >
               <Text
                 className={`font-medium ${
-                  selectedStatus === option.value ? 'text-white' : 'text-gray-600'
+                  filter === option.value ? 'text-white' : 'text-gray-600'
                 }`}
               >
                 {option.label}
@@ -71,54 +145,22 @@ export default function LeaveRequestScreen() {
       </ScrollView>
 
       {/* 请假记录列表 */}
-      <ScrollView className="flex-1 p-4">
-        {isLoading ? (
-          <View className="flex-1 justify-center items-center">
-            <ActivityIndicator size="large" color="#3b82f6" />
-          </View>
-        ) : leaveRequests?.items?.length === 0 ? (
-          <View className="flex-1 justify-center items-center">
-            <Text className="text-gray-500">暂无请假记录</Text>
-          </View>
-        ) : (
-          leaveRequests?.items?.map((request) => (
-            <TouchableOpacity
-              key={request.id}
-              className="bg-white rounded-lg p-4 mb-4 shadow-sm"
-              onPress={() => router.push(`/leave-request/${request.id}`)}
-            >
-              <View className="flex-row justify-between items-start mb-2">
-                <View>
-                  <Text className="text-lg font-bold mb-1">
-                    {request.type === 'ANNUAL' ? '年假' :
-                     request.type === 'SICK' ? '病假' :
-                     request.type === 'PERSONAL' ? '事假' :
-                     request.type === 'COMPENSATORY' ? '调休' : '其他'}
-                  </Text>
-                  <Text className="text-gray-600">
-                    {new Date(request.startDate).toLocaleDateString()} 至{' '}
-                    {new Date(request.endDate).toLocaleDateString()}
-                  </Text>
-                </View>
-                <View className={`px-3 py-1 rounded-full ${
-                  request.status === 'PENDING' ? 'bg-yellow-500' :
-                  request.status === 'APPROVED' ? 'bg-green-500' :
-                  request.status === 'REJECTED' ? 'bg-red-500' : 'bg-gray-500'
-                }`}>
-                  <Text className="text-white text-sm">
-                    {request.status === 'PENDING' ? '待审批' :
-                     request.status === 'APPROVED' ? '已批准' :
-                     request.status === 'REJECTED' ? '已拒绝' : '未知'}
-                  </Text>
-                </View>
-              </View>
-              <Text className="text-gray-600" numberOfLines={2}>
-                {request.reason}
-              </Text>
-            </TouchableOpacity>
-          ))
-        )}
-      </ScrollView>
+      {isLoading ? (
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#3b82f6" />
+        </View>
+      ) : (
+        <FlatList
+          data={leaveRequests?.items || []}
+          renderItem={renderItem}
+          keyExtractor={item => item.id.toString()}
+          contentContainerStyle={{ padding: 16 }}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={renderFooter}
+          ListEmptyComponent={renderEmpty}
+        />
+      )}
     </View>
   );
 } 

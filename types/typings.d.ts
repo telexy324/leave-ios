@@ -24,4 +24,26 @@ declare namespace API {
       itemsPerPage: number;
     };
   }
+
+  type TableListResult<T = any> = {
+    items?: T;
+    meta?: PaginationResult;
+  };
+
+  /** 全局通用表格分页返回数据结构 */
+  type PaginationResult = {
+    itemCount?: number;
+    totalItems?: number;
+    itemsPerPage?: number;
+    totalPages?: number;
+    currentPage?: number;
+  };
+
+  /** 全局通用表格分页请求参数 */
+  type PageParams<T = any> = {
+    page?: number;
+    pageSize?: number;
+  } & {
+    [P in keyof T]?: T[P];
+  };
 }
