@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { LeaveEntity } from '@/types/nestapi';
+import { getLeaveTypeText, getStatusColor, getStatusText } from "@/utils/translation";
 
 export default function LeaveRequestScreen() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
@@ -28,6 +30,9 @@ export default function LeaveRequestScreen() {
       }
       return data
     },
+    staleTime: 30000,
+    retry: 2,
+    retryDelay: 1000,
   });
 
   // 状态选项
@@ -40,11 +45,12 @@ export default function LeaveRequestScreen() {
 
   const handleFilterChange = (newFilter: typeof filter) => {
     setFilter(newFilter);
+    setPage(1);
   };
 
   // 处理加载更多
   const handleLoadMore = () => {
-    if (hasMore) {
+    if (hasMore && !isLoading) {
       setPage(prev => prev + 1);
     }
   };
@@ -67,38 +73,31 @@ export default function LeaveRequestScreen() {
   );
 
   // 渲染列表项
-  const renderItem = ({ item: request }) => (
+  const renderItem = ({ item }: { item: LeaveEntity }) => (
     <TouchableOpacity
       className="bg-white rounded-lg p-4 mb-4 shadow-sm"
-      onPress={() => router.push(`/leave-request/${request.id}`)}
+      onPress={() => router.push(`/leave-request/${item.id}`)}
     >
       <View className="flex-row justify-between items-start mb-2">
         <View>
           <Text className="text-lg font-bold mb-1">
-            {request.type === 'ANNUAL' ? '年假' :
-             request.type === 'SICK' ? '病假' :
-             request.type === 'PERSONAL' ? '事假' :
-             request.type === 'COMPENSATORY' ? '调休' : '其他'}
+            {getLeaveTypeText(item.type)}
           </Text>
           <Text className="text-gray-600">
-            {new Date(request.startDate).toLocaleDateString()} 至{' '}
-            {new Date(request.endDate).toLocaleDateString()}
+            {new Date(item.startDate).toLocaleDateString()} 至{' '}
+            {new Date(item.endDate).toLocaleDateString()}
           </Text>
         </View>
         <View className={`px-3 py-1 rounded-full ${
-          request.status === 'PENDING' ? 'bg-yellow-500' :
-          request.status === 'APPROVED' ? 'bg-green-500' :
-          request.status === 'REJECTED' ? 'bg-red-500' : 'bg-gray-500'
+          getStatusColor(item.status)
         }`}>
           <Text className="text-white text-sm">
-            {request.status === 'PENDING' ? '待审批' :
-             request.status === 'APPROVED' ? '已批准' :
-             request.status === 'REJECTED' ? '已拒绝' : '未知'}
+            {getStatusText(item.status)}
           </Text>
         </View>
       </View>
       <Text className="text-gray-600" numberOfLines={2}>
-        {request.reason}
+        {item.reason}
       </Text>
     </TouchableOpacity>
   );
