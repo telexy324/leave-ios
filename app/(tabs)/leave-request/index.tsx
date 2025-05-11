@@ -1,11 +1,11 @@
 import { leaveBalanceApi } from '@/lib/leaveBalance';
+import { LeaveEntity } from '@/types/nestapi';
+import { getLeaveTypeText, getStatusColor, getStatusText } from "@/utils/translation";
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
-import { LeaveEntity } from '@/types/nestapi';
-import { getLeaveTypeText, getStatusColor, getStatusText } from "@/utils/translation";
 
 export default function LeaveRequestScreen() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
@@ -33,6 +33,10 @@ export default function LeaveRequestScreen() {
     staleTime: 30000,
     retry: 2,
     retryDelay: 1000,
+    enabled: page === 1 || hasMore,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 
   // 状态选项
@@ -44,6 +48,7 @@ export default function LeaveRequestScreen() {
   ];
 
   const handleFilterChange = (newFilter: typeof filter) => {
+    if (newFilter === filter) return;
     setFilter(newFilter);
     setPage(1);
   };
@@ -57,7 +62,7 @@ export default function LeaveRequestScreen() {
 
   // 渲染加载更多指示器
   const renderFooter = () => {
-    if (!hasMore) return null;
+    if (!hasMore || !leaveRequests?.items?.length) return null;
     return (
       <View className="py-4">
         <ActivityIndicator size="small" color="#3b82f6" />
@@ -157,9 +162,13 @@ export default function LeaveRequestScreen() {
           keyExtractor={item => item.id.toString()}
           contentContainerStyle={{ padding: 16 }}
           onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.5}
+          onEndReachedThreshold={0.2}
           ListFooterComponent={renderFooter}
           ListEmptyComponent={renderEmpty}
+          showsVerticalScrollIndicator={true}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={5}
         />
       )}
     </View>
