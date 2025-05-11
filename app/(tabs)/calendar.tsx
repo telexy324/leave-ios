@@ -1,53 +1,49 @@
+import { LeaveRequestCard } from '@/components/app/LeaveRequestCard';
+import { leaveBalanceApi } from '@/lib/leaveBalance';
 import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-
-interface LeaveRequest {
-  id: string;
-  leaveType: string;
-  startDate: string;
-  endDate: string;
-  days: number;
-  status: 'pending' | 'approved' | 'rejected';
-}
-
-// 模拟数据
-const mockLeaveRequests: LeaveRequest[] = [
-  {
-    id: '1',
-    leaveType: '年假',
-    startDate: '2025-05-15',
-    endDate: '2025-05-16',
-    days: 2,
-    status: 'approved',
-  },
-  {
-    id: '2',
-    leaveType: '病假',
-    startDate: '2025-05-20',
-    endDate: '2025-05-21',
-    days: 2,
-    status: 'pending',
-  },
-];
+import { RequestStatus } from "@/types/other";
+import { formatDate } from "@/utils/date";
 
 export default function CalendarScreen() {
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState('');
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  // 使用 React Query 获取请假记录
+  const { data: leaveRequests, isLoading } = useQuery({
+    queryKey: ['leaveRequests', currentMonth.getFullYear(), currentMonth.getMonth() + 1],
+    queryFn: () => {
+      const startDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+      const endDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0, 23, 59, 59);
+      
+      return leaveBalanceApi.getLeaveRequests({
+        page: 1,
+        pageSize: 100,
+        startDate: formatDate(startDate),
+        endDate: formatDate(endDate),
+      });
+    },
+    staleTime: 30000,
+    retry: 2,
+    retryDelay: 1000,
+  });
 
   // 生成日历标记数据
   const getMarkedDates = () => {
     const marked: any = {};
-    mockLeaveRequests.forEach(request => {
+    leaveRequests?.items?.forEach(request => {
       const start = new Date(request.startDate);
       const end = new Date(request.endDate);
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         const dateStr = d.toISOString().split('T')[0];
         marked[dateStr] = {
           marked: true,
-          dotColor: request.status === 'approved' ? 'green' : 'yellow',
+          dotColor: request.status === RequestStatus.APPROVED ? 'green' : 'yellow',
         };
       }
     });
@@ -56,14 +52,27 @@ export default function CalendarScreen() {
 
   // 获取选中日期的请假记录
   const getSelectedDateRequests = () => {
-    if (!selectedDate) return [];
-    return mockLeaveRequests.filter(request => {
+    if (!selectedDate || !leaveRequests?.items) return [];
+    const selected = new Date(selectedDate);
+    return leaveRequests.items.filter(request => {
       const start = new Date(request.startDate);
       const end = new Date(request.endDate);
-      const selected = new Date(selectedDate);
       return selected >= start && selected <= end;
     });
   };
+
+  // 处理月份变化
+  const handleMonthChange = (month: any) => {
+    setCurrentMonth(new Date(month.timestamp));
+  };
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -84,6 +93,7 @@ export default function CalendarScreen() {
           <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
             <Calendar
               onDayPress={day => setSelectedDate(day.dateString)}
+              onMonthChange={handleMonthChange}
               markedDates={getMarkedDates()}
               theme={{
                 todayTextColor: '#2563eb',
@@ -116,24 +126,7 @@ export default function CalendarScreen() {
               </Text>
               {getSelectedDateRequests().length > 0 ? (
                 getSelectedDateRequests().map(request => (
-                  <TouchableOpacity
-                    key={request.id}
-                    className="border-b border-gray-100 py-3"
-                    onPress={() => router.push(`/leave-request/${request.id}`)}
-                  >
-                    <View className="flex-row justify-between items-center">
-                      <Text className="font-bold">{request.leaveType}</Text>
-                      <Text
-                        className={`${
-                          request.status === 'approved'
-                            ? 'text-green-600'
-                            : 'text-yellow-600'
-                        }`}
-                      >
-                        {request.status === 'approved' ? '已批准' : '待审批'}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
+                  <LeaveRequestCard key={request.id} item={request} />
                 ))
               ) : (
                 <Text className="text-gray-500">当天没有请假记录</Text>
