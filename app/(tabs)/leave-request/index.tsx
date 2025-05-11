@@ -91,7 +91,9 @@ export default function LeaveRequestScreen() {
         <View className={`px-3 py-1 rounded-full ${
           getStatusColor(item.status)
         }`}>
-          <Text className="text-white text-sm">
+          <Text className={`text-white text-sm ${
+            getStatusColor(item.status)
+          }`}>
             {getStatusText(item.status)}
           </Text>
         </View>
