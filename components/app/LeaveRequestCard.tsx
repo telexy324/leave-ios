@@ -1,5 +1,6 @@
 import { LeaveEntity } from '@/types/nestapi';
 import { getLeaveTypeText, getStatusColor, getStatusText } from "@/utils/translation";
+import { formatDateTime } from "@/utils/date";
 import { router } from 'expo-router';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -34,9 +35,32 @@ export function LeaveRequestCard({ item }: LeaveRequestCardProps) {
           </Text>
         </View>
       </View>
-      <Text className="text-gray-600" numberOfLines={2}>
-        {item.reason}
-      </Text>
+      <View className="space-y-2">
+        <View className="flex-row justify-between">
+          <Text className="text-gray-600 flex-shrink-0 mr-2">请假时间</Text>
+          <Text className="font-bold flex-1 text-right" numberOfLines={1}>
+            {formatDateTime(item.startDate)} 至 {formatDateTime(item.endDate)}
+          </Text>
+        </View>
+        <View className="flex-row justify-between">
+          <Text className="text-gray-600 flex-shrink-0 mr-2">请假天数</Text>
+          <Text className="font-bold flex-1 text-right">
+            {item.amount} 天
+          </Text>
+        </View>
+        <View className="flex-row justify-between">
+          <Text className="text-gray-600 flex-shrink-0 mr-2">申请时间</Text>
+          <Text className="font-bold flex-1 text-right">
+            {formatDateTime(item.createdAt)}
+          </Text>
+        </View>
+        {item.reason && (
+          <View>
+            <Text className="text-gray-600 mb-1">请假原因</Text>
+            <Text className="text-base" numberOfLines={2}>{item.reason}</Text>
+          </View>
+        )}
+      </View>
     </TouchableOpacity>
   );
 } 
