@@ -1,5 +1,6 @@
 import { LeaveRequestCard } from '@/components/app/LeaveRequestCard';
 import { leaveBalanceApi } from '@/lib/leaveBalance';
+import { formatDate } from "@/utils/date";
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from 'expo-router';
@@ -7,7 +8,6 @@ import React, { useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { RequestStatus } from "@/types/other";
-import { formatDate } from "@/utils/date";
 
 export default function CalendarScreen() {
   const router = useRouter();
@@ -41,9 +41,23 @@ export default function CalendarScreen() {
       const end = new Date(request.endDate);
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         const dateStr = d.toISOString().split('T')[0];
+        // 根据状态设置不同的背景色
+        let backgroundColor = '';
+        switch (request.status) {
+          case RequestStatus.PENDING:
+            backgroundColor = '#eab308'; // yellow-500
+            break;
+          case RequestStatus.APPROVED:
+            backgroundColor = '#22c55e'; // green-500
+            break;
+          case RequestStatus.REJECTED:
+            backgroundColor = '#ef4444'; // red-500
+            break;
+        }
         marked[dateStr] = {
-          marked: true,
-          dotColor: request.status === RequestStatus.APPROVED ? 'green' : 'yellow',
+          selected: true,
+          selectedColor: backgroundColor,
+          selectedTextColor: '#ffffff', // 白色文字
         };
       }
     });
@@ -99,6 +113,13 @@ export default function CalendarScreen() {
                 todayTextColor: '#2563eb',
                 selectedDayBackgroundColor: '#2563eb',
                 selectedDayTextColor: '#ffffff',
+                dotColor: '#2563eb',
+                selectedDotColor: '#ffffff',
+                arrowColor: '#2563eb',
+                monthTextColor: '#1f2937',
+                textDayFontSize: 16,
+                textMonthFontSize: 16,
+                textDayHeaderFontSize: 16,
               }}
             />
           </View>
@@ -114,6 +135,10 @@ export default function CalendarScreen() {
               <View className="flex-row items-center">
                 <View className="w-3 h-3 rounded-full bg-yellow-500 mr-2" />
                 <Text className="text-gray-600">待审批的请假</Text>
+              </View>
+              <View className="flex-row items-center">
+                <View className="w-3 h-3 rounded-full bg-red-500 mr-2" />
+                <Text className="text-gray-600">已拒绝的请假</Text>
               </View>
             </View>
           </View>
