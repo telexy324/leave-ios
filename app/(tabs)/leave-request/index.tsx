@@ -51,11 +51,12 @@ export default function LeaveRequestScreen() {
     if (newFilter === filter) return;
     setFilter(newFilter);
     setPage(1);
+    setHasMore(false);
   };
 
   // 处理加载更多
   const handleLoadMore = () => {
-    if (hasMore && !isLoading) {
+    if (hasMore && !isLoading && leaveRequests?.items && leaveRequests?.items.length > 0) {
       setPage(prev => prev + 1);
     }
   };
