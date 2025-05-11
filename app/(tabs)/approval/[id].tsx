@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import ApprovalModal from '../../components/ApprovalModal';
+import ApprovalModal from '@/components/app/ApprovalModal';
 
 // 格式化时间函数
 const formatDateTime = (isoString: string) => {

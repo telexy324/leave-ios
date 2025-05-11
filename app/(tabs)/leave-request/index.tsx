@@ -1,6 +1,6 @@
+import { LeaveRequestCard } from '@/components/app/LeaveRequestCard';
 import { leaveBalanceApi } from '@/lib/leaveBalance';
 import { LeaveEntity } from '@/types/nestapi';
-import { getLeaveTypeText, getStatusColor, getStatusText } from "@/utils/translation";
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -80,34 +80,7 @@ export default function LeaveRequestScreen() {
 
   // 渲染列表项
   const renderItem = ({ item }: { item: LeaveEntity }) => (
-    <TouchableOpacity
-      className="bg-white rounded-lg p-4 mb-4 shadow-sm"
-      onPress={() => router.push(`/leave-request/${item.id}`)}
-    >
-      <View className="flex-row justify-between items-start mb-2">
-        <View>
-          <Text className="text-lg font-bold mb-1">
-            {getLeaveTypeText(item.type)}
-          </Text>
-          <Text className="text-gray-600">
-            {new Date(item.startDate).toLocaleDateString()} 至{' '}
-            {new Date(item.endDate).toLocaleDateString()}
-          </Text>
-        </View>
-        <View className={`px-3 py-1 rounded-full ${
-          getStatusColor(item.status)
-        }`}>
-          <Text className={`text-sm ${
-            getStatusColor(item.status)
-          }`}>
-            {getStatusText(item.status)}
-          </Text>
-        </View>
-      </View>
-      <Text className="text-gray-600" numberOfLines={2}>
-        {item.reason}
-      </Text>
-    </TouchableOpacity>
+    <LeaveRequestCard item={item} />
   );
 
   return (

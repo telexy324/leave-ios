@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import FileUpload from '../../../components/FileUpload';
+import FileUpload from '@/components/app/FileUpload';
 
 interface LeaveType {
   id: string;
