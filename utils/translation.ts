@@ -13,6 +13,36 @@ export const getStatusColor = (status: number) => {
   }
 };
 
+export const getStatusColorBg = (status: number) => {
+  switch (status) {
+    case 1:
+      return 'bg-yellow-100';
+    case 2:
+      return 'bg-green-100';
+    case 3:
+      return 'bg-red-100';
+    case 4:
+      return 'bg-gray-100';
+    default:
+      return 'bg-yellow-100';
+  }
+};
+
+export const getStatusColorText = (status: number) => {
+  switch (status) {
+    case 1:
+      return 'text-yellow-600';
+    case 2:
+      return 'text-green-600';
+    case 3:
+      return 'text-red-600';
+    case 4:
+      return 'text-gray-600';
+    default:
+      return 'text-yellow-600';
+  }
+};
+
 export const getStatusText = (status: number) => {
   switch (status) {
     case 1:
