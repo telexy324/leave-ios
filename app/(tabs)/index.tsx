@@ -1,3 +1,4 @@
+import { LeaveRequestCard } from '@/components/app/LeaveRequestCard';
 import { leaveBalanceApi } from '@/lib/leaveBalance';
 import { useAuthStore } from '@/lib/store/auth';
 import { Ionicons } from '@expo/vector-icons';
@@ -114,86 +115,8 @@ export default function HomeScreen() {
         {/* 最近请假记录 */}
         <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
           <Text className="text-lg font-bold mb-4">最近请假记录</Text>
-          {leaveRecent?.items?.map((request, index) => (
-            <TouchableOpacity
-              key={request.id}
-              className={`bg-white rounded-lg p-5 mb-4 shadow-sm ${
-                index !== (leaveRecent?.items?.length || 1) - 1 ? 'border-b border-gray-100' : ''
-              }`}
-              onPress={() => router.push(`/leave-request/${request.id}`)}
-            >
-              <View className="flex-row justify-between items-start mb-3">
-                <Text className="text-lg font-bold">
-                  {request.type === 1
-                    ? '调休'
-                    : request.type === 2
-                    ? '年假'
-                    : request.type === 3
-                    ? '病假'
-                    : request.type === 4
-                    ? '事假'
-                    : '其他'}
-                </Text>
-                <View
-                  className={`px-3 py-1 rounded ${
-                    request.status === 2
-                      ? 'bg-green-100'
-                      : request.status === 3
-                      ? 'bg-red-100'
-                      : request.status === 4
-                      ? 'bg-gray-100'
-                      : 'bg-yellow-100'
-                  }`}
-                >
-                  <Text
-                    className={`font-bold ${
-                      request.status === 2
-                        ? 'text-green-600'
-                        : request.status === 3
-                        ? 'text-red-600'
-                        : request.status === 4
-                        ? 'text-gray-600'
-                        : 'text-yellow-600'
-                    }`}
-                  >
-                    {request.status === 2
-                      ? '已通过'
-                      : request.status === 3
-                      ? '已驳回'
-                      : request.status === 4
-                      ? '已取消'
-                      : '待审批'}
-                  </Text>
-                </View>
-              </View>
-
-              <View className="space-y-2">
-                <View className="flex-row justify-between">
-                  <Text className="text-gray-600 flex-shrink-0 mr-2">请假时间</Text>
-                  <Text className="font-bold flex-1 text-right" numberOfLines={1}>
-                    {formatDateTime(request.startDate)} 至 {formatDateTime(request.endDate)}
-                  </Text>
-                </View>
-                <View className="flex-row justify-between">
-                  <Text className="text-gray-600 flex-shrink-0 mr-2">请假天数</Text>
-                  <Text className="font-bold flex-1 text-right">
-                    {request.amount} 天
-                  </Text>
-                </View>
-                <View className="flex-row justify-between">
-                  <Text className="text-gray-600 flex-shrink-0 mr-2">申请时间</Text>
-                  <Text className="font-bold flex-1 text-right">
-                    {formatDateTime(request.createdAt)}
-                  </Text>
-                </View>
-                {request.reason && (
-                  <View>
-                    <Text className="text-gray-600 mb-1">请假原因</Text>
-                    <Text className="text-base" numberOfLines={2}>{request.reason}</Text>
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
+          {leaveRecent?.items?.map((request) => (
+            <LeaveRequestCard key={request.id} item={request} />
           ))}
         </View>
       </View>
