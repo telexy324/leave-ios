@@ -1,41 +1,23 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-
-interface LeaveRequest {
-  id: string;
-  leaveType: string;
-  startDate: string;
-  endDate: string;
-  days: number;
-  reason: string;
-  status: 'pending' | 'approved' | 'rejected';
-  attachments?: Array<{ name: string; uri: string }>;
-  createdAt: string;
-  approver?: string;
-  approvedAt?: string;
-  comment?: string;
-}
-
-// 模拟数据
-const mockLeaveRequest: LeaveRequest = {
-  id: '1',
-  leaveType: '年假',
-  startDate: '2024-03-15',
-  endDate: '2024-03-16',
-  days: 2,
-  reason: '个人事务',
-  status: 'pending',
-  attachments: [
-    { name: '请假证明.pdf', uri: 'file:///path/to/file.pdf' },
-  ],
-  createdAt: '2024-03-10 10:00',
-};
+import { leaveBalanceApi } from '@/lib/leaveBalance';
+import { useQuery } from '@tanstack/react-query';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React from 'react';
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { LeaveRequestCard } from "@/components/app/LeaveRequestCard";
+import { RequestStatus } from '@/types/other';
 
 export default function LeaveRequestDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
-  const [request, setRequest] = useState<LeaveRequest>(mockLeaveRequest);
+
+  // 使用 React Query 获取请假详情
+  const { data: request, isLoading } = useQuery({
+    queryKey: ['leaveRequest', id],
+    queryFn: () => leaveBalanceApi.getLeaveRequest({id: Number(id)}),
+    staleTime: 30000, // 30秒内不重新请求
+    retry: 2,
+    retryDelay: 1000,
+  });
 
   const handleRevoke = () => {
     Alert.alert(
@@ -48,10 +30,13 @@ export default function LeaveRequestDetailScreen() {
         },
         {
           text: '确定',
-          onPress: () => {
-            // TODO: 实现撤回逻辑，发送到后端
-            console.log('Revoke request:', id);
-            router.back();
+          onPress: async () => {
+            try {
+              await leaveBalanceApi.cancelLeaveRequest({id: Number(id)});
+              router.back();
+            } catch (error) {
+              Alert.alert('错误', '撤回申请失败，请稍后重试');
+            }
           },
         },
       ],
@@ -65,73 +50,42 @@ export default function LeaveRequestDetailScreen() {
     });
   };
 
+  if (isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </View>
+    );
+  }
+
+  if (!request) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text className="text-gray-500">未找到请假记录</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView className="flex-1 bg-gray-50">
       <View className="p-5">
         {/* 状态卡片 */}
-        <View
-          className={`bg-white rounded-lg p-5 mb-5 shadow-sm border-l-4 ${
-            request.status === 'approved'
-              ? 'border-green-500'
-              : request.status === 'rejected'
-              ? 'border-red-500'
-              : 'border-yellow-500'
-          }`}
-        >
-          <View className="flex-row justify-between items-center mb-3">
-            <Text className="text-lg font-bold">{request.leaveType}</Text>
-            <Text
-              className={`font-bold ${
-                request.status === 'approved'
-                  ? 'text-green-500'
-                  : request.status === 'rejected'
-                  ? 'text-red-500'
-                  : 'text-yellow-500'
-              }`}
-            >
-              {request.status === 'approved'
-                ? '已批准'
-                : request.status === 'rejected'
-                ? '已拒绝'
-                : '待审批'}
-            </Text>
-          </View>
-          <View className="space-y-2">
-            <View className="flex-row justify-between">
-              <Text className="text-gray-600">请假时间</Text>
-              <Text className="font-bold">
-                {request.startDate} 至 {request.endDate}
-              </Text>
-            </View>
-            <View className="flex-row justify-between">
-              <Text className="text-gray-600">请假天数</Text>
-              <Text className="font-bold">{request.days} 天</Text>
-            </View>
-            <View className="flex-row justify-between">
-              <Text className="text-gray-600">申请时间</Text>
-              <Text className="font-bold">{request.createdAt}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* 请假原因 */}
-        <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
-          <Text className="text-lg font-bold mb-3">请假原因</Text>
-          <Text className="text-base">{request.reason}</Text>
-        </View>
+        <LeaveRequestCard item={request} />
 
         {/* 审批信息 */}
-        {request.status !== 'pending' && (
+        {(request.status === RequestStatus.APPROVED || request.status === RequestStatus.REJECTED) && (
           <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
             <Text className="text-lg font-bold mb-3">审批信息</Text>
             <View className="space-y-2">
               <View className="flex-row justify-between">
                 <Text className="text-gray-600">审批人</Text>
-                <Text className="font-bold">{request.approver}</Text>
+                <Text className="font-bold">{request.approver?.username}</Text>
               </View>
               <View className="flex-row justify-between">
                 <Text className="text-gray-600">审批时间</Text>
-                <Text className="font-bold">{request.approvedAt}</Text>
+                <Text className="font-bold">
+                  {new Date(request.doneAt).toLocaleString()}
+                </Text>
               </View>
               {request.comment && (
                 <View>
@@ -162,7 +116,7 @@ export default function LeaveRequestDetailScreen() {
         )}
 
         {/* 操作按钮 */}
-        {request.status === 'pending' && (
+        {request.status === RequestStatus.PENDING && (
           <View className="flex-row space-x-3">
             <TouchableOpacity
               className="flex-1 h-12 bg-gray-200 rounded-lg justify-center items-center"

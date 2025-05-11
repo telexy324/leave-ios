@@ -1222,6 +1222,8 @@ export interface LeaveEntity {
   user: UserEntity;
   approver: UserEntity;
   comment: string;
+  /** @format date-time */
+  doneAt: string;
   id: number;
   /** @format date-time */
   createdAt: string;
