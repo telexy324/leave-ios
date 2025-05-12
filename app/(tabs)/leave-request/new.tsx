@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { z } from 'zod';
+import { calculateLeaveDays } from "@/utils/date";
 
 // 定义表单验证 schema
 const schema = z.object({
@@ -84,28 +85,6 @@ export default function NewLeaveRequestScreen() {
       remainingDays: (leaveStats?.totalCompensatoryLeaves || 0) - (leaveStats?.usedCompensatoryLeaves || 0),
     },
   ];
-
-  // 添加计算请假天数的函数
-  const calculateLeaveDays = (startDate: Date, endDate: Date): number => {
-    const diffInHours = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
-    
-    // 如果时间差小于等于0，返回0
-    if (diffInHours <= 0) return 0;
-    
-    // 计算完整的天数
-    const fullDays = Math.floor(diffInHours / 24);
-    
-    // 计算剩余的小时数
-    const remainingHours = diffInHours % 24;
-    
-    // 如果剩余时间超过8小时，算作一天
-    if (remainingHours >= 8) {
-      return fullDays + 1;
-    }
-    
-    // 如果剩余时间不足8小时，按小时计算
-    return fullDays + Math.floor(remainingHours / 8);
-  };
 
   const onSubmit = async (data: FormData) => {
     try {

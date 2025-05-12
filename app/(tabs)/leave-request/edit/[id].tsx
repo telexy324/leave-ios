@@ -1,84 +1,107 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import FileUpload from '@/components/app/FileUpload';
+import { leaveBalanceApi } from '@/lib/leaveBalance';
+import { LeaveEntity } from '@/types/nestapi';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useQuery } from '@tanstack/react-query';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { calculateLeaveDays } from "@/utils/date";
+import { format } from "date-fns";
 
-interface LeaveType {
-  id: string;
+interface Attachment {
   name: string;
-  remainingDays: number;
+  url: string;
 }
 
-interface LeaveRequest {
-  id: string;
-  leaveType: string;
-  startDate: string;
-  endDate: string;
-  days: number;
-  reason: string;
-  attachments?: Array<{ name: string; uri: string }>;
+interface ExtendedLeaveEntity extends LeaveEntity {
+  attachments?: Attachment[];
 }
-
-// 模拟数据
-const mockLeaveTypes: LeaveType[] = [
-  { id: '1', name: '年假', remainingDays: 10 },
-  { id: '2', name: '病假', remainingDays: 15 },
-  { id: '3', name: '事假', remainingDays: 5 },
-];
-
-const mockLeaveRequest: LeaveRequest = {
-  id: '1',
-  leaveType: '1',
-  startDate: '2024-03-15',
-  endDate: '2024-03-16',
-  days: 2,
-  reason: '个人事务',
-  attachments: [
-    { name: '请假证明.pdf', uri: 'file:///path/to/file.pdf' },
-  ],
-};
 
 export default function EditLeaveRequestScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams();
-  const [selectedLeaveType, setSelectedLeaveType] = useState<string>('');
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const [selectedLeaveType, setSelectedLeaveType] = useState<number>(1);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [reason, setReason] = useState('');
   const [attachments, setAttachments] = useState<Array<{ name: string; uri: string }>>([]);
 
-  useEffect(() => {
-    // TODO: 根据 id 获取请假申请数据
-    const request = mockLeaveRequest;
-    setSelectedLeaveType(request.leaveType);
-    setStartDate(new Date(request.startDate));
-    setEndDate(new Date(request.endDate));
-    setReason(request.reason);
-    setAttachments(request.attachments || []);
-  }, [id]);
+  // 获取请假详情
+  const { data: request, isLoading } = useQuery<ExtendedLeaveEntity>({
+    queryKey: ['leaveRequest', id],
+    queryFn: () => leaveBalanceApi.getLeaveRequest({id: Number(id)}),
+    staleTime: 30000,
+    retry: 2,
+    retryDelay: 1000,
+  });
 
-  const handleSubmit = () => {
-    if (!selectedLeaveType) {
-      Alert.alert('提示', '请选择请假类型');
-      return;
+  useEffect(() => {
+    if (request) {
+      setSelectedLeaveType(request.type);
+      setStartDate(new Date(request.startDate));
+      setEndDate(new Date(request.endDate));
+      setReason(request.reason);
+      if (request.attachments) {
+        setAttachments(request.attachments.map(att => ({
+          name: att.name,
+          uri: att.url
+        })));
+      }
     }
+  }, [request]);
+
+  const handleSubmit = async () => {
     if (!reason.trim()) {
       Alert.alert('提示', '请填写请假原因');
       return;
     }
 
-    // TODO: 实现修改逻辑，发送到后端
-    console.log('Update:', {
-      id,
-      leaveType: selectedLeaveType,
-      startDate,
-      endDate,
-      reason,
-      attachments,
-    });
-    router.back();
+    try {
+      const leaveDays = calculateLeaveDays(startDate, endDate);
+
+      const formattedData = {
+        type: selectedLeaveType as 1 | 2 | 3 | 4 | 5,
+        startDate: format(startDate, 'yyyy-MM-dd HH:mm:ss'),
+        endDate: format(endDate, 'yyyy-MM-dd HH:mm:ss'),
+        amount: leaveDays.toString(),
+        status: 1 as const,
+        reason: reason,
+        proof: attachments.length > 0 ? attachments[0].uri : undefined,
+      };
+      await leaveBalanceApi.updateLeaveRequest(
+        {
+          id: Number(id),
+        },
+        formattedData
+      );
+      
+      Alert.alert('成功', '请假申请已更新', [
+        {
+          text: '确定',
+          onPress: () => router.replace('/(tabs)/leave-request'),
+        },
+      ]);
+    } catch (error) {
+      Alert.alert('错误', '更新失败，请稍后重试');
+    }
   };
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </View>
+    );
+  }
+
+  if (!request) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text className="text-gray-500">未找到请假记录</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView className="flex-1 bg-gray-50">
@@ -87,28 +110,88 @@ export default function EditLeaveRequestScreen() {
         <View className="mb-5">
           <Text className="text-lg font-bold mb-3">请假类型</Text>
           <View className="flex-row space-x-3">
-            {mockLeaveTypes.map(type => (
-              <TouchableOpacity
-                key={type.id}
-                className={`flex-1 py-3 px-4 rounded-lg border ${
-                  selectedLeaveType === type.id
-                    ? 'border-primary bg-primary/10'
-                    : 'border-gray-200 bg-white'
+            <TouchableOpacity
+              className={`flex-1 py-3 px-4 rounded-lg border ${
+                selectedLeaveType === 1
+                  ? 'border-primary bg-primary/10'
+                  : 'border-gray-200 bg-white'
+              }`}
+              onPress={() => setSelectedLeaveType(1)}
+            >
+              <Text
+                className={`text-center font-bold ${
+                  selectedLeaveType === 1 ? 'text-primary' : 'text-gray-600'
                 }`}
-                onPress={() => setSelectedLeaveType(type.id)}
               >
-                <Text
-                  className={`text-center font-bold ${
-                    selectedLeaveType === type.id ? 'text-primary' : 'text-gray-600'
-                  }`}
-                >
-                  {type.name}
-                </Text>
-                <Text className="text-center text-gray-500 text-sm mt-1">
-                  剩余 {type.remainingDays} 天
-                </Text>
-              </TouchableOpacity>
-            ))}
+                调休
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className={`flex-1 py-3 px-4 rounded-lg border ${
+                selectedLeaveType === 2
+                  ? 'border-primary bg-primary/10'
+                  : 'border-gray-200 bg-white'
+              }`}
+              onPress={() => setSelectedLeaveType(2)}
+            >
+              <Text
+                className={`text-center font-bold ${
+                  selectedLeaveType === 2 ? 'text-primary' : 'text-gray-600'
+                }`}
+              >
+                年假
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className={`flex-1 py-3 px-4 rounded-lg border ${
+                selectedLeaveType === 3
+                  ? 'border-primary bg-primary/10'
+                  : 'border-gray-200 bg-white'
+              }`}
+              onPress={() => setSelectedLeaveType(3)}
+            >
+              <Text
+                className={`text-center font-bold ${
+                  selectedLeaveType === 3 ? 'text-primary' : 'text-gray-600'
+                }`}
+              >
+                病假
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View className="flex-row space-x-3 mt-3">
+            <TouchableOpacity
+              className={`flex-1 py-3 px-4 rounded-lg border ${
+                selectedLeaveType === 4
+                  ? 'border-primary bg-primary/10'
+                  : 'border-gray-200 bg-white'
+              }`}
+              onPress={() => setSelectedLeaveType(4)}
+            >
+              <Text
+                className={`text-center font-bold ${
+                  selectedLeaveType === 4 ? 'text-primary' : 'text-gray-600'
+                }`}
+              >
+                事假
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className={`flex-1 py-3 px-4 rounded-lg border ${
+                selectedLeaveType === 5
+                  ? 'border-primary bg-primary/10'
+                  : 'border-gray-200 bg-white'
+              }`}
+              onPress={() => setSelectedLeaveType(5)}
+            >
+              <Text
+                className={`text-center font-bold ${
+                  selectedLeaveType === 5 ? 'text-primary' : 'text-gray-600'
+                }`}
+              >
+                其他
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -120,7 +203,7 @@ export default function EditLeaveRequestScreen() {
               <Text className="text-gray-600 mb-1">开始时间</Text>
               <DateTimePicker
                 value={startDate}
-                mode="date"
+                mode="datetime"
                 display="default"
                 onChange={(event, date) => date && setStartDate(date)}
               />
@@ -129,7 +212,7 @@ export default function EditLeaveRequestScreen() {
               <Text className="text-gray-600 mb-1">结束时间</Text>
               <DateTimePicker
                 value={endDate}
-                mode="date"
+                mode="datetime"
                 display="default"
                 onChange={(event, date) => date && setEndDate(date)}
               />
@@ -153,8 +236,8 @@ export default function EditLeaveRequestScreen() {
         <View className="mb-5">
           <Text className="text-lg font-bold mb-3">附件上传</Text>
           <FileUpload
-            value={attachments}
-            onChange={setAttachments}
+            files={attachments}
+            onFilesChange={setAttachments}
             maxFiles={3}
             allowedTypes={['image/*', 'application/pdf']}
           />
@@ -162,7 +245,7 @@ export default function EditLeaveRequestScreen() {
 
         {/* 提交按钮 */}
         <TouchableOpacity
-          className="h-12 bg-primary rounded-lg justify-center items-center"
+          className="h-12 bg-blue-500 rounded-lg justify-center items-center"
           onPress={handleSubmit}
         >
           <Text className="text-white font-bold text-base">保存修改</Text>
