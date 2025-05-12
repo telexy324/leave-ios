@@ -11,7 +11,7 @@ import { Calendar } from 'react-native-calendars';
 import Svg, { Path } from 'react-native-svg';
 
 // 自定义日期组件
-const CustomDay = ({ date, state, marking }: any) => {
+const CustomDay = ({ date, state, marking, onPress }: any) => {
   const getStatusColors = () => {
     const colors = {
       pending: false,
@@ -91,7 +91,10 @@ const CustomDay = ({ date, state, marking }: any) => {
   };
 
   return (
-    <View style={{ width: 36, height: 36, justifyContent: 'center', alignItems: 'center' }}>
+    <TouchableOpacity 
+      style={{ width: 36, height: 36, justifyContent: 'center', alignItems: 'center' }}
+      onPress={() => onPress(date)}
+    >
       {renderCircle()}
       <Text
         style={{
@@ -102,7 +105,7 @@ const CustomDay = ({ date, state, marking }: any) => {
       >
         {date.day}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -133,15 +136,30 @@ export default function CalendarScreen() {
   // 获取选中日期的请假记录
   const { data: selectedDateRequests, isLoading: isLoadingSelectedDate } = useQuery({
     queryKey: ['selectedDateRequests', selectedDate],
-    queryFn: () => {
+    queryFn: async () => {
       if (!selectedDate) return { items: [] };
       const date = new Date(selectedDate);
-      return leaveBalanceApi.getLeaveRequests({
+      // 设置时间为当天的开始和结束
+      const startDate = new Date(date);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
+
+      console.log('Fetching leave requests for date:', {
+        selectedDate,
+        startDate: formatDate(startDate),
+        endDate: formatDate(endDate)
+      });
+
+      const response = await leaveBalanceApi.getLeaveRequests({
         page: 1,
         pageSize: 100,
-        startDate: formatDate(date),
-        endDate: formatDate(date),
+        startDate: formatDate(startDate),
+        endDate: formatDate(endDate),
       });
+
+      console.log('Leave requests response:', response);
+      return response;
     },
     enabled: !!selectedDate,
     staleTime: 30000,
@@ -194,6 +212,12 @@ export default function CalendarScreen() {
     setCurrentMonth(new Date(month.timestamp));
   };
 
+  // 处理日期选择
+  const handleDayPress = (day: any) => {
+    console.log('Day pressed:', day);
+    setSelectedDate(day.dateString);
+  };
+
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -220,11 +244,11 @@ export default function CalendarScreen() {
           {/* 日历视图 */}
           <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
             <Calendar
-              onDayPress={day => setSelectedDate(day.dateString)}
+              onDayPress={handleDayPress}
               onMonthChange={handleMonthChange}
               markedDates={getMarkedDates()}
               markingType="multi-dot"
-              dayComponent={CustomDay}
+              dayComponent={(props) => <CustomDay {...props} onPress={handleDayPress} />}
               theme={{
                 todayTextColor: '#2563eb',
                 selectedDayBackgroundColor: '#2563eb',
