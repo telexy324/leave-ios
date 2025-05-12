@@ -132,25 +132,25 @@ export const leaveBalanceApi = {
   },
 
   // 获取请假余额
-  getLeaveBalance: () => {
-    return api.get<LeaveBalance[]>('/leaves/balance');
-  },
+  // getLeaveBalance: () => {
+  //   return api.get<LeaveBalance[]>('/leaves/balance');
+  // },
 
   // 获取请假统计
-  getLeaveStatistics: (params?: {
-    startDate: string;
-    endDate: string;
-    departmentId?: string;
-  }) => {
-    return api.get('/leaves/statistics', { params });
-  },
+  // getLeaveStatistics: (params?: {
+  //   startDate: string;
+  //   endDate: string;
+  //   departmentId?: string;
+  // }) => {
+  //   return api.get('/leaves/statistics', { params });
+  // },
 
   // 获取请假日历数据
-  getLeaveCalendar: (params?: {
-    startDate: string;
-    endDate: string;
-    departmentId?: string;
-  }) => {
-    return api.get('/leaves/calendar', { params });
-  },
+  // getLeaveCalendar: (params?: {
+  //   startDate: string;
+  //   endDate: string;
+  //   departmentId?: string;
+  // }) => {
+  //   return api.get('/leaves/calendar', { params });
+  // },
 };
