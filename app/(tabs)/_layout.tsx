@@ -73,6 +73,7 @@ export default function AppLayout() {
       <Tabs.Screen
         name="leave-request/new"
         options={{
+          title: '新增',
           href: null,
           tabBarItemStyle: {
             display: 'none'
@@ -82,6 +83,7 @@ export default function AppLayout() {
       <Tabs.Screen
         name="leave-request/[id]"
         options={{
+          title: '详情',
           href: null,
           tabBarItemStyle: {
             display: 'none'
@@ -91,6 +93,7 @@ export default function AppLayout() {
       <Tabs.Screen
         name="leave-request/edit/[id]"
         options={{
+          title: '编辑',
           href: null,
           tabBarItemStyle: {
             display: 'none'
@@ -100,6 +103,7 @@ export default function AppLayout() {
       <Tabs.Screen
         name="approval/[id]"
         options={{
+          title: '审批',
           href: null,
           tabBarItemStyle: {
             display: 'none'
