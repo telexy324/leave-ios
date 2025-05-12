@@ -1,11 +1,13 @@
 import { useAuthStore } from '@/lib/store/auth';
 import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { useEffect } from 'react';
+import { TouchableOpacity } from 'react-native';
 
 export default function AppLayout() {
   const user = useAuthStore(state => state.user);
   const isAdmin = user?.isAdmin;
+  const router = useRouter();
 
   useEffect(() => {
     console.log('Current user:', user);
@@ -87,7 +89,15 @@ export default function AppLayout() {
           href: null,
           tabBarItemStyle: {
             display: 'none'
-          }
+          },
+          headerLeft: () => (
+            <TouchableOpacity 
+              onPress={() => router.replace('/(tabs)/leave-request')}
+              style={{ marginLeft: 16 }}
+            >
+              <Ionicons name="arrow-back" size={24} color="#fff" />
+            </TouchableOpacity>
+          ),
         }}
       />
       <Tabs.Screen

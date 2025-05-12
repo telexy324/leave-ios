@@ -2,7 +2,6 @@ import { LeaveRequestCard } from "@/components/app/LeaveRequestCard";
 import { leaveBalanceApi } from '@/lib/leaveBalance';
 import { LeaveEntity } from '@/types/nestapi';
 import { RequestStatus } from '@/types/other';
-import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
@@ -79,17 +78,6 @@ export default function LeaveRequestDetailScreen() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      {/* 顶部导航栏 */}
-      <View className="flex-row items-center p-4 bg-white border-b border-gray-200">
-        <TouchableOpacity 
-          onPress={() => router.replace('/(tabs)/leave-request')} 
-          className="mr-4"
-        >
-          <Ionicons name="arrow-back" size={24} color="#374151" />
-        </TouchableOpacity>
-        <Text className="text-lg font-bold text-gray-800">请假详情</Text>
-      </View>
-
       <ScrollView>
         <View className="p-5">
           {/* 状态卡片 */}
