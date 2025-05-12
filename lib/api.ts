@@ -12,7 +12,7 @@ import qs from 'qs';
 
 const controller = new AbortController();
 const service = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:7001',
+  baseURL: process.env.REACT_APP_API_URL || 'http://172.20.10.7:7001',
   // adapter: 'fetch',
   timeout: 10000,
   signal: controller.signal,

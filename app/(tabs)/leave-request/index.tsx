@@ -2,41 +2,37 @@ import { LeaveRequestCard } from '@/components/app/LeaveRequestCard';
 import { leaveBalanceApi } from '@/lib/leaveBalance';
 import { LeaveEntity } from '@/types/nestapi';
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
 
 export default function LeaveRequestScreen() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
   const pageSize = 10;
 
   // 使用 leaveBalanceApi 的 getLeaveRequests 接口
-  const { data: leaveRequests, isLoading } = useQuery({
-    queryKey: ['leaveRequests', filter, page],
-    queryFn: async () => {
-      const data = await leaveBalanceApi.getLeaveRequests({
-        page,
+  const { 
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useInfiniteQuery({
+    queryKey: ['leaveRequests', filter],
+    queryFn: async ({ pageParam = 1 }) => {
+      return await leaveBalanceApi.getLeaveRequests({
+        page: pageParam as number,
         pageSize,
         status: filter === 'pending' ? 1 : filter === 'approved' ? 2 : filter === 'rejected' ? 3 : undefined,
-      })
-      const currentTotalPage = Math.ceil((data?.meta?.totalPages || 0) / pageSize);
-      if ((data?.meta?.currentPage || 0) > currentTotalPage) {
-        setHasMore(true);
-      } else {
-        setHasMore(false);
-      }
-      return data
+      });
     },
-    staleTime: 30000,
-    retry: 2,
-    retryDelay: 1000,
-    enabled: page === 1 || hasMore,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.meta?.currentPage || !lastPage.meta?.totalPages) return undefined;
+      if (lastPage.meta.currentPage >= lastPage.meta.totalPages) return undefined;
+      return lastPage.meta.currentPage + 1;
+    },
   });
 
   // 状态选项
@@ -50,20 +46,18 @@ export default function LeaveRequestScreen() {
   const handleFilterChange = (newFilter: typeof filter) => {
     if (newFilter === filter) return;
     setFilter(newFilter);
-    setPage(1);
-    setHasMore(false);
   };
 
   // 处理加载更多
   const handleLoadMore = () => {
-    if (hasMore && !isLoading && leaveRequests?.items && leaveRequests?.items.length > 0) {
-      setPage(prev => prev + 1);
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
   };
 
   // 渲染加载更多指示器
   const renderFooter = () => {
-    if (!hasMore || !leaveRequests?.items?.length) return null;
+    if (!isFetchingNextPage) return null;
     return (
       <View className="py-4">
         <ActivityIndicator size="small" color="#3b82f6" />
@@ -82,6 +76,8 @@ export default function LeaveRequestScreen() {
   const renderItem = ({ item }: { item: LeaveEntity }) => (
     <LeaveRequestCard item={item} />
   );
+
+  const allRequests = data?.pages.flatMap(page => page.items || []) || [];
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -131,7 +127,7 @@ export default function LeaveRequestScreen() {
         </View>
       ) : (
         <FlatList
-          data={leaveRequests?.items || []}
+          data={allRequests}
           renderItem={renderItem}
           keyExtractor={item => item.id.toString()}
           contentContainerStyle={{ padding: 16 }}
