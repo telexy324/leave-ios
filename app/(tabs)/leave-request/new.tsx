@@ -1,5 +1,5 @@
 import { leaveBalanceApi } from '@/lib/leaveBalance';
-import { Ionicons } from '@expo/vector-icons';
+import { calculateLeaveDays } from "@/utils/date";
 import { zodResolver } from '@hookform/resolvers/zod';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useQuery } from '@tanstack/react-query';
@@ -9,7 +9,8 @@ import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { z } from 'zod';
-import { calculateLeaveDays } from "@/utils/date";
+import { uploadApi } from "@/lib/upload";
+import FileUpload from "@/components/app/FileUpload";
 
 // 定义表单验证 schema
 const schema = z.object({
@@ -38,6 +39,7 @@ export default function NewLeaveRequestScreen() {
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [files, setFiles] = useState<Array<{ name: string; uri: string; type: string; size: number }>>([]);
 
   // 使用 React Query 获取假期统计
   const { data: leaveStats, isLoading } = useQuery({
@@ -91,6 +93,26 @@ export default function NewLeaveRequestScreen() {
       setIsSubmitting(true);
       const leaveDays = calculateLeaveDays(data.startDate, data.endDate);
       
+      // 处理文件上传
+      let proof:string[] = [];
+      if (files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+          // const file = files[0];
+          const formData = new FormData();
+          formData.append('file', {
+            uri: files[i].uri,
+            type: files[i].type,
+            name: files[i].name,
+          } as any);
+
+          // 调用文件上传 API
+          const uploadResponse = await uploadApi.uploadFile(formData);
+          proof.push(uploadResponse)
+        }
+        // 这里需要实现文件上传到服务器的逻辑
+        // 假设我们只上传第一个文件
+      }
+      
       const formattedData = {
         type: data.leaveType as 1 | 2 | 3 | 4 | 5,
         startDate: format(data.startDate, 'yyyy-MM-dd HH:mm:ss'),
@@ -98,10 +120,10 @@ export default function NewLeaveRequestScreen() {
         amount: leaveDays.toString(),
         status: 1 as const,
         reason: data.reason,
-        proof: data.proof || undefined,
+        proof: proof,
       };
-      console.log(formattedData)
-      await leaveBalanceApi.createLeaveRequest(formattedData)
+      
+      await leaveBalanceApi.createLeaveRequest(formattedData);
       router.back();
     } catch (error) {
       console.error('提交失败:', error);
@@ -254,10 +276,10 @@ export default function NewLeaveRequestScreen() {
             name="reason"
             render={({ field: { onChange, value } }) => (
               <TextInput
-                className="h-24 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200"
-                placeholder="请输入请假原因"
+                className="h-24 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200 text-gray-900"
                 multiline
                 textAlignVertical="top"
+                placeholder="请输入请假原因（至少8个字符）"
                 value={value}
                 onChangeText={onChange}
               />
@@ -268,42 +290,28 @@ export default function NewLeaveRequestScreen() {
           )}
         </View>
 
-        {/* 附件上传 */}
+        {/* 文件上传 */}
         <View className="mb-4">
-          <Text className="text-gray-600 mb-2">上传附件（选填）</Text>
-          <Controller
-            control={control}
-            name="proof"
-            render={({ field: { onChange, value } }) => (
-              <TouchableOpacity
-                className="h-24 border-2 border-dashed border-gray-300 rounded-lg justify-center items-center"
-                onPress={() => {
-                  // 处理文件上传
-                }}
-              >
-                <View className="items-center">
-                  <Ionicons name="cloud-upload-outline" size={24} color="#6B7280" />
-                  <Text className="text-gray-500 mt-2">点击上传附件</Text>
-                </View>
-              </TouchableOpacity>
-            )}
+          <Text className="text-gray-600 mb-2">上传证明文件（可选）</Text>
+          <FileUpload
+            onFilesSelected={(selectedFiles) => setFiles(selectedFiles)}
+            maxFiles={3}
+            allowedTypes={['image/*', 'application/pdf']}
           />
         </View>
 
         {/* 提交按钮 */}
-        <View className="mt-6 mb-8">
-          <TouchableOpacity
-            className={`h-12 rounded-lg justify-center items-center ${
-              isSubmitting ? 'bg-gray-400' : 'bg-blue-500'
-            }`}
-            onPress={handleSubmit(onSubmit)}
-            disabled={isSubmitting}
-          >
-            <Text className="text-white font-bold text-base">
-              {isSubmitting ? '提交中...' : '提交申请'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          className={`h-12 rounded-lg justify-center items-center ${
+            isSubmitting ? 'bg-gray-400' : 'bg-primary'
+          }`}
+          onPress={handleSubmit(onSubmit)}
+          disabled={isSubmitting}
+        >
+          <Text className="text-white font-bold text-base">
+            {isSubmitting ? '提交中...' : '提交申请'}
+          </Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );

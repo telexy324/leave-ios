@@ -1218,7 +1218,7 @@ export interface LeaveEntity {
   endDate: string;
   amount: string;
   reason: string;
-  proof: string;
+  proof: string[] | null;
   user: UserEntity;
   approver: UserEntity;
   comment: string;
@@ -1263,7 +1263,7 @@ export interface LeaveDto {
    */
   reason: string;
   /** 请假佐证 */
-  proof?: string;
+  proof?: string[] | null;
   /** 评论 */
   comment?: string;
   /**
@@ -1310,7 +1310,7 @@ export interface LeaveUpdateDto {
    */
   reason?: string;
   /** 请假佐证 */
-  proof?: string;
+  proof?: string[] | null;
   /** 评论 */
   comment?: string;
   /**
@@ -1358,6 +1358,80 @@ export interface LeaveBalanceEntity {
   createdAt: string;
   /** @format date-time */
   updatedAt: string;
+}
+
+export interface LeaveBalanceDto {
+  /** 申请时长 */
+  amount: string;
+  /**
+   *
+   * 请假类型:
+   * - 1: 调休
+   * - 2: 年假
+   * - 3: 病假
+   * - 4: 事假
+   * - 5: 其他
+   *
+   */
+  type: 1 | 2 | 3 | 4 | 5;
+  /**
+   * 开始时间
+   * @pattern /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/
+   * @example "2025-04-30 15:30:00"
+   */
+  startDate: string;
+  /**
+   * 结束时间
+   * @pattern /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/
+   * @example "2025-04-30 17:45:00"
+   */
+  endDate: string;
+  /**
+   * 请假事由
+   * @minLength 8
+   */
+  reason: string;
+  /** 请假佐证 */
+  proof?: string;
+  /** 评论 */
+  comment?: string;
+}
+
+export interface LeaveBalanceUpdateDto {
+  /** 申请时长 */
+  amount?: string;
+  /**
+   *
+   * 请假类型:
+   * - 1: 调休
+   * - 2: 年假
+   * - 3: 病假
+   * - 4: 事假
+   * - 5: 其他
+   *
+   */
+  type?: 1 | 2 | 3 | 4 | 5;
+  /**
+   * 开始时间
+   * @pattern /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/
+   * @example "2025-04-30 15:30:00"
+   */
+  startDate?: string;
+  /**
+   * 结束时间
+   * @pattern /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/
+   * @example "2025-04-30 17:45:00"
+   */
+  endDate?: string;
+  /**
+   * 请假事由
+   * @minLength 8
+   */
+  reason?: string;
+  /** 请假佐证 */
+  proof?: string;
+  /** 评论 */
+  comment?: string;
 }
 
 export interface CommonEntity {

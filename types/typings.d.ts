@@ -46,4 +46,9 @@ declare namespace API {
   } & {
     [P in keyof T]?: T[P];
   };
+
+  type FileUploadDto = {
+    /** 文件 */
+    file: Record<string, any>;
+  };
 }

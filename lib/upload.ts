@@ -1,4 +1,3 @@
-import { FileUploadDto } from "@/types/nestapi";
 import { request, RequestOptions } from './api';
 
 // export interface UploadResponse {
@@ -47,7 +46,7 @@ export const uploadApi = {
   //   return api.get<UploadResponse>(`/upload/${filename}`);
   // },
 
-  uploadFile(body: FileUploadDto, file?: File, options?: RequestOptions) {
+  uploadFile(body: API.FileUploadDto, file?: File, options?: RequestOptions) {
     const formData = new FormData();
 
     if (file) {
