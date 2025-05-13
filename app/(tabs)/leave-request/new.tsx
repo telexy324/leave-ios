@@ -1,16 +1,26 @@
 import FileUpload from "@/components/app/FileUpload";
 import { leaveBalanceApi } from '@/lib/leaveBalance';
 import { uploadApi } from "@/lib/upload";
+import { LeaveEntity } from '@/types/nestapi';
 import { calculateLeaveDays } from "@/utils/date";
 import { zodResolver } from '@hookform/resolvers/zod';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { z } from 'zod';
+
+interface Attachment {
+  name: string;
+  url: string;
+}
+
+interface ExtendedLeaveEntity extends LeaveEntity {
+  attachments?: Attachment[];
+}
 
 // 定义表单验证 schema
 const schema = z.object({
@@ -33,16 +43,29 @@ interface LeaveType {
   remainingDays: number;
 }
 
-export default function NewLeaveRequestScreen() {
+export default function LeaveRequestFormScreen() {
   const router = useRouter();
-  const [attachments, setAttachments] = React.useState<Array<{ name: string; uri: string }>>([]);
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const isEdit = !!id;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [files, setFiles] = useState<Array<{ name: string; uri: string; type: string; size: number }>>([]);
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
 
   // 使用 React Query 获取假期统计
-  const { data: leaveStats, isLoading } = useQuery({
+  const { data: leaveStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['leaveStats'],
     queryFn: () => leaveBalanceApi.getLeaveStats(),
+  });
+
+  // 如果是编辑模式，获取请假详情
+  const { data: request, isLoading: isLoadingRequest } = useQuery<ExtendedLeaveEntity>({
+    queryKey: ['leaveRequest', id],
+    queryFn: () => leaveBalanceApi.getLeaveRequest({id: Number(id)}),
+    enabled: isEdit,
+    staleTime: 30000,
+    retry: 2,
+    retryDelay: 1000,
   });
 
   // 初始化表单
@@ -50,6 +73,7 @@ export default function NewLeaveRequestScreen() {
     control,
     handleSubmit,
     watch,
+    reset,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -61,6 +85,27 @@ export default function NewLeaveRequestScreen() {
       proof: undefined,
     },
   });
+
+  // 如果是编辑模式，设置表单初始值
+  useEffect(() => {
+    if (request) {
+      reset({
+        leaveType: request.type,
+        startDate: new Date(request.startDate),
+        endDate: new Date(request.endDate),
+        reason: request.reason,
+        proof: request.proof?.[0],
+      });
+      if (request.attachments) {
+        setFiles(request.attachments.map(att => ({
+          name: att.name,
+          uri: att.url,
+          type: 'application/octet-stream',
+          size: 0
+        })));
+      }
+    }
+  }, [request, reset]);
 
   // 将后端数据转换为前端需要的格式
   const leaveTypes: LeaveType[] = [
@@ -119,15 +164,45 @@ export default function NewLeaveRequestScreen() {
         reason: data.reason,
         proof: proof,
       };
-      
-      await leaveBalanceApi.createLeaveRequest(formattedData);
-      router.back();
+
+      if (isEdit) {
+        await leaveBalanceApi.updateLeaveRequest(
+          { id: Number(id) },
+          formattedData
+        );
+        Alert.alert('成功', '请假申请已更新', [
+          {
+            text: '确定',
+            onPress: () => router.replace('/(tabs)/leave-request'),
+          },
+        ]);
+      } else {
+        await leaveBalanceApi.createLeaveRequest(formattedData);
+        router.back();
+      }
     } catch (error) {
       console.error('提交失败:', error);
+      Alert.alert('错误', '操作失败，请稍后重试');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (isEdit && isLoadingRequest) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </View>
+    );
+  }
+
+  if (isEdit && !request) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text className="text-gray-500">未找到请假记录</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView className="flex-1 bg-gray-50">
@@ -135,7 +210,7 @@ export default function NewLeaveRequestScreen() {
         {/* 请假类型选择 */}
         <View className="mb-5">
           <Text className="text-lg font-bold mb-3">请假类型</Text>
-          {isLoading ? (
+          {isLoadingStats ? (
             <View className="items-center py-4">
               <Text className="text-gray-500">加载中...</Text>
             </View>
@@ -177,47 +252,77 @@ export default function NewLeaveRequestScreen() {
         </View>
 
         {/* 请假时间选择 */}
-        <View className="mb-5">
-          <Text className="text-lg font-bold mb-3">请假时间</Text>
-          <View className="space-y-3">
-            <View>
-              <Text className="text-gray-600 mb-1">开始时间</Text>
-              <Controller
-                control={control}
-                name="startDate"
-                render={({ field: { onChange, value } }) => (
+        <View className="mb-4">
+          <Text className="text-gray-600 mb-2">开始时间</Text>
+          <Controller
+            control={control}
+            name="startDate"
+            render={({ field: { onChange, value } }) => (
+              <>
+                <TouchableOpacity
+                  className="h-12 px-4 bg-gray-50 rounded-lg border border-gray-200 justify-center"
+                  onPress={() => setShowStartPicker(true)}
+                >
+                  <Text className="text-gray-900">
+                    {value ? format(value, 'yyyy-MM-dd HH:mm') : '请选择开始时间'}
+                  </Text>
+                </TouchableOpacity>
+                {showStartPicker && (
                   <DateTimePicker
                     value={value || new Date()}
                     mode="datetime"
-                    display="default"
-                    onChange={(event, date) => date && onChange(date)}
+                    display="spinner"
+                    onChange={(event, selectedDate) => {
+                      setShowStartPicker(false);
+                      if (selectedDate) {
+                        onChange(selectedDate);
+                      }
+                    }}
                     minimumDate={new Date()}
                     minuteInterval={30}
                   />
                 )}
-              />
-            </View>
-            <View>
-              <Text className="text-gray-600 mb-1">结束时间</Text>
-              <Controller
-                control={control}
-                name="endDate"
-                render={({ field: { onChange, value } }) => (
+              </>
+            )}
+          />
+          {errors.startDate && (
+            <Text className="text-red-500 text-sm mt-1">{errors.startDate.message}</Text>
+          )}
+        </View>
+
+        <View className="mb-4">
+          <Text className="text-gray-600 mb-2">结束时间</Text>
+          <Controller
+            control={control}
+            name="endDate"
+            render={({ field: { onChange, value } }) => (
+              <>
+                <TouchableOpacity
+                  className="h-12 px-4 bg-gray-50 rounded-lg border border-gray-200 justify-center"
+                  onPress={() => setShowEndPicker(true)}
+                >
+                  <Text className="text-gray-900">
+                    {value ? format(value, 'yyyy-MM-dd HH:mm') : '请选择结束时间'}
+                  </Text>
+                </TouchableOpacity>
+                {showEndPicker && (
                   <DateTimePicker
                     value={value || new Date()}
                     mode="datetime"
-                    display="default"
-                    onChange={(event, date) => date && onChange(date)}
+                    display="spinner"
+                    onChange={(event, selectedDate) => {
+                      setShowEndPicker(false);
+                      if (selectedDate) {
+                        onChange(selectedDate);
+                      }
+                    }}
                     minimumDate={watch('startDate') || new Date()}
                     minuteInterval={30}
                   />
                 )}
-              />
-            </View>
-          </View>
-          {errors.startDate && (
-            <Text className="text-red-500 text-sm mt-1">{errors.startDate.message}</Text>
-          )}
+              </>
+            )}
+          />
           {errors.endDate && (
             <Text className="text-red-500 text-sm mt-1">{errors.endDate.message}</Text>
           )}
@@ -276,7 +381,7 @@ export default function NewLeaveRequestScreen() {
           disabled={isSubmitting}
         >
           <Text className="text-white font-bold text-lg">
-            {isSubmitting ? '提交中...' : '提交申请'}
+            {isSubmitting ? '提交中...' : isEdit ? '更新申请' : '提交申请'}
           </Text>
         </TouchableOpacity>
       </View>
