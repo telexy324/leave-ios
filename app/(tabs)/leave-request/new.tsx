@@ -36,8 +36,6 @@ interface LeaveType {
 export default function NewLeaveRequestScreen() {
   const router = useRouter();
   const [attachments, setAttachments] = React.useState<Array<{ name: string; uri: string }>>([]);
-  const [showStartPicker, setShowStartPicker] = useState(false);
-  const [showEndPicker, setShowEndPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [files, setFiles] = useState<Array<{ name: string; uri: string; type: string; size: number }>>([]);
 
@@ -179,77 +177,47 @@ export default function NewLeaveRequestScreen() {
         </View>
 
         {/* 请假时间选择 */}
-        <View className="mb-4">
-          <Text className="text-gray-600 mb-2">开始时间</Text>
-          <Controller
-            control={control}
-            name="startDate"
-            render={({ field: { onChange, value } }) => (
-              <>
-                <TouchableOpacity
-                  className="h-12 px-4 bg-gray-50 rounded-lg border border-gray-200 justify-center"
-                  onPress={() => setShowStartPicker(true)}
-                >
-                  <Text className="text-gray-900">
-                    {value ? format(value, 'yyyy-MM-dd HH:mm') : '请选择开始时间'}
-                  </Text>
-                </TouchableOpacity>
-                {showStartPicker && (
+        <View className="mb-5">
+          <Text className="text-lg font-bold mb-3">请假时间</Text>
+          <View className="space-y-3">
+            <View>
+              <Text className="text-gray-600 mb-1">开始时间</Text>
+              <Controller
+                control={control}
+                name="startDate"
+                render={({ field: { onChange, value } }) => (
                   <DateTimePicker
                     value={value || new Date()}
                     mode="datetime"
-                    display="spinner"
-                    onChange={(event, selectedDate) => {
-                      setShowStartPicker(false);
-                      if (selectedDate) {
-                        onChange(selectedDate);
-                      }
-                    }}
+                    display="default"
+                    onChange={(event, date) => date && onChange(date)}
                     minimumDate={new Date()}
                     minuteInterval={30}
                   />
                 )}
-              </>
-            )}
-          />
-          {errors.startDate && (
-            <Text className="text-red-500 text-sm mt-1">{errors.startDate.message}</Text>
-          )}
-        </View>
-
-        <View className="mb-4">
-          <Text className="text-gray-600 mb-2">结束时间</Text>
-          <Controller
-            control={control}
-            name="endDate"
-            render={({ field: { onChange, value } }) => (
-              <>
-                <TouchableOpacity
-                  className="h-12 px-4 bg-gray-50 rounded-lg border border-gray-200 justify-center"
-                  onPress={() => setShowEndPicker(true)}
-                >
-                  <Text className="text-gray-900">
-                    {value ? format(value, 'yyyy-MM-dd HH:mm') : '请选择结束时间'}
-                  </Text>
-                </TouchableOpacity>
-                {showEndPicker && (
+              />
+            </View>
+            <View>
+              <Text className="text-gray-600 mb-1">结束时间</Text>
+              <Controller
+                control={control}
+                name="endDate"
+                render={({ field: { onChange, value } }) => (
                   <DateTimePicker
                     value={value || new Date()}
                     mode="datetime"
-                    display="spinner"
-                    onChange={(event, selectedDate) => {
-                      setShowEndPicker(false);
-                      if (selectedDate) {
-                        onChange(selectedDate);
-                      }
-                    }}
+                    display="default"
+                    onChange={(event, date) => date && onChange(date)}
                     minimumDate={watch('startDate') || new Date()}
                     minuteInterval={30}
                   />
                 )}
-              </>
-            )}
-          />
+              />
+            </View>
+          </View>
+          {errors.startDate && (
+            <Text className="text-red-500 text-sm mt-1">{errors.startDate.message}</Text>
+          )}
           {errors.endDate && (
             <Text className="text-red-500 text-sm mt-1">{errors.endDate.message}</Text>
           )}
