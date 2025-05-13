@@ -88,7 +88,7 @@ export default function LeaveRequestFormScreen() {
 
   // 如果是编辑模式，设置表单初始值
   useEffect(() => {
-    if (request) {
+    if (isEdit && request) {
       reset({
         leaveType: request.type,
         startDate: new Date(request.startDate),
@@ -104,8 +104,18 @@ export default function LeaveRequestFormScreen() {
           size: 0
         })));
       }
+    } else {
+      // 新增模式下清空表单
+      reset({
+        leaveType: undefined,
+        startDate: undefined,
+        endDate: undefined,
+        reason: '',
+        proof: undefined,
+      });
+      setFiles([]);
     }
-  }, [request, reset]);
+  }, [request, reset, isEdit]);
 
   // 将后端数据转换为前端需要的格式
   const leaveTypes: LeaveType[] = [
