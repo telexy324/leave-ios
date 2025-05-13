@@ -51,3 +51,7 @@ declare namespace API {
     filename: string
   }
 }
+
+declare module '@env' {
+  export const API_URL: string;
+}
