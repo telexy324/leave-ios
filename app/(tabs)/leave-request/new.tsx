@@ -301,13 +301,13 @@ export default function NewLeaveRequestScreen() {
 
         {/* 提交按钮 */}
         <TouchableOpacity
-          className={`h-12 rounded-lg justify-center items-center ${
-            isSubmitting ? 'bg-gray-400' : 'bg-primary'
+          className={`h-12 rounded-lg justify-center items-center mt-4 mb-8 ${
+            isSubmitting ? 'bg-gray-400' : 'bg-blue-500'
           }`}
           onPress={handleSubmit(onSubmit)}
           disabled={isSubmitting}
         >
-          <Text className="text-white font-bold text-base">
+          <Text className="text-white font-bold text-lg">
             {isSubmitting ? '提交中...' : '提交申请'}
           </Text>
         </TouchableOpacity>
