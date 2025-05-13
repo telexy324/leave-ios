@@ -3,11 +3,15 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
+    "start:dev": "cp .env.development .env && expo start",
+    "start:prod": "cp .env.production .env && expo start",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
+    "android:dev": "cp .env.development .env && expo start --android",
+    "android:prod": "cp .env.production .env && expo start --android",
+    "ios:dev": "cp .env.development .env && expo start --ios",
+    "ios:prod": "cp .env.production .env && expo start --ios",
+    "web:dev": "cp .env.development .env && expo start --web",
+    "web:prod": "cp .env.production .env && expo start --web",
     "lint": "expo lint"
   },
   "dependencies": {
@@ -43,6 +47,7 @@
     "react-hook-form": "^7.56.3",
     "react-native": "0.79.1",
     "react-native-calendars": "^1.1312.0",
+    "react-native-dotenv": "^3.4.11",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-reanimated": "^3.16.2",
     "react-native-safe-area-context": "^5.3.0",

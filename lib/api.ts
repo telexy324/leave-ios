@@ -1,6 +1,7 @@
 import { useAuthStore } from '@/lib/store/auth';
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import qs from 'qs';
+import { API_URL } from '@env';
 
 // 创建自定义的axios实例类型
 // interface CustomAxiosInstance extends Omit<AxiosInstance, 'get' | 'post' | 'put' | 'delete'> {
@@ -12,7 +13,7 @@ import qs from 'qs';
 
 const controller = new AbortController();
 const service = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://172.20.10.7:7001',
+  baseURL: API_URL,
   // adapter: 'fetch',
   timeout: 10000,
   signal: controller.signal,
