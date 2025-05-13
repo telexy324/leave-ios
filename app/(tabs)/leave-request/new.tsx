@@ -1,4 +1,6 @@
+import FileUpload from "@/components/app/FileUpload";
 import { leaveBalanceApi } from '@/lib/leaveBalance';
+import { uploadApi } from "@/lib/upload";
 import { calculateLeaveDays } from "@/utils/date";
 import { zodResolver } from '@hookform/resolvers/zod';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -7,10 +9,8 @@ import { format } from 'date-fns';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { z } from 'zod';
-import { uploadApi } from "@/lib/upload";
-import FileUpload from "@/components/app/FileUpload";
 
 // 定义表单验证 schema
 const schema = z.object({
@@ -96,21 +96,20 @@ export default function NewLeaveRequestScreen() {
       // 处理文件上传
       let proof:string[] = [];
       if (files.length > 0) {
-        for (let i = 0; i < files.length; i++) {
-          // const file = files[0];
-          const formData = new FormData();
-          formData.append('file', {
-            uri: files[i].uri,
-            type: files[i].type,
-            name: files[i].name,
-          } as any);
-
-          // 调用文件上传 API
-          const uploadResponse = await uploadApi.uploadFile(formData);
-          proof.push(uploadResponse)
+        for (const file of files) {
+          try {
+            const uploadResponse = await uploadApi.uploadFile({
+              uri: file.uri,
+              type: file.type,
+              name: file.name,
+            });
+            proof.push(uploadResponse);
+          } catch (error) {
+            console.error('文件上传失败:', error);
+            Alert.alert('错误', '文件上传失败，请重试');
+            return;
+          }
         }
-        // 这里需要实现文件上传到服务器的逻辑
-        // 假设我们只上传第一个文件
       }
       
       const formattedData = {

@@ -46,28 +46,12 @@ export const uploadApi = {
   //   return api.get<UploadResponse>(`/upload/${filename}`);
   // },
 
-  uploadFile(body: API.FileUploadDto, file?: File, options?: RequestOptions) {
+  uploadFile(file: { uri: string; type: string; name: string }, options?: RequestOptions) {
     const formData = new FormData();
 
     if (file) {
-      formData.append('file', file);
+      formData.append('file', file as any);
     }
-
-    Object.keys(body).forEach((ele) => {
-      const item = (body as any)[ele];
-
-      if (item !== undefined && item !== null) {
-        if (typeof item === 'object' && !(item instanceof File)) {
-          if (item instanceof Array) {
-            item.forEach((f) => formData.append(ele, f || ''));
-          } else {
-            formData.append(ele, JSON.stringify(item));
-          }
-        } else {
-          formData.append(ele, item);
-        }
-      }
-    });
 
     return request<string>('/api/tools/upload', {
       method: 'POST',
