@@ -47,10 +47,10 @@ export default function LeaveRequestFormScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const isEdit = !!id;
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [files, setFiles] = useState<Array<{ name: string; uri: string; type: string; size: number }>>([]);
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [files, setFiles] = useState<Array<{ name: string; uri: string; type: string; size: number }>>([]);
 
   // 使用 React Query 获取假期统计
   const { data: leaveStats, isLoading: isLoadingStats } = useQuery({
@@ -96,10 +96,10 @@ export default function LeaveRequestFormScreen() {
         reason: request.reason,
         proof: request.proof?.[0],
       });
-      if (request.attachments) {
-        setFiles(request.attachments.map(att => ({
-          name: att.name,
-          uri: att.url,
+      if (request.proof && request.proof.length > 0) {
+        setFiles(request.proof.map(url => ({
+          name: url.split('/').pop() || '文件',
+          uri: url,
           type: 'application/octet-stream',
           size: 0
         })));
@@ -370,6 +370,16 @@ export default function LeaveRequestFormScreen() {
             maxFiles={3}
             allowedTypes={['image/*', 'application/pdf']}
           />
+          {isEdit && files.length > 0 && (
+            <View className="mt-2">
+              <Text className="text-gray-600 mb-2">已有文件：</Text>
+              {files.map((file, index) => (
+                <View key={index} className="flex-row items-center bg-gray-50 p-2 rounded-lg mb-2">
+                  <Text className="flex-1 text-gray-900">{file.name}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* 提交按钮 */}

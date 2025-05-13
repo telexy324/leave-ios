@@ -55,7 +55,7 @@ export default function LeaveRequestDetailScreen() {
 
   const handleEdit = () => {
     router.push({
-      pathname: '/(tabs)/leave-request/edit/[id]',
+      pathname: '/(tabs)/leave-request/new',
       params: { id },
     });
   };
