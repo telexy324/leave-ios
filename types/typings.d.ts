@@ -46,4 +46,8 @@ declare namespace API {
   } & {
     [P in keyof T]?: T[P];
   };
+
+  type UploadResponse = {
+    filename: string
+  }
 }

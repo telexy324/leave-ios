@@ -48,12 +48,11 @@ export const uploadApi = {
 
   uploadFile(file: { uri: string; type: string; name: string }, options?: RequestOptions) {
     const formData = new FormData();
-
     if (file) {
       formData.append('file', file as any);
     }
 
-    return request<string>('/api/tools/upload', {
+    return request<API.UploadResponse>('/api/tools/upload', {
       method: 'POST',
       data: formData,
       requestType: 'form',

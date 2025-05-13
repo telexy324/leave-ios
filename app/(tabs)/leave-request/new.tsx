@@ -103,7 +103,7 @@ export default function NewLeaveRequestScreen() {
               type: file.type,
               name: file.name,
             });
-            proof.push(uploadResponse);
+            proof.push(uploadResponse.filename);
           } catch (error) {
             console.error('文件上传失败:', error);
             Alert.alert('错误', '文件上传失败，请重试');
