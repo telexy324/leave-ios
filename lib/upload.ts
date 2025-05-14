@@ -53,7 +53,7 @@ export const uploadApi = {
       formData.append('file', file as any);
     }
 
-    return request<Storage>('/api/tools/upload', {
+    return request<Storage>('/api/tools/upload/mobile', {
       method: 'POST',
       data: formData,
       requestType: 'form',
