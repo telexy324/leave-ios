@@ -108,16 +108,16 @@ export default function LeaveRequestDetailScreen() {
             </View>
           )}
 
-          {request.proof && request.proof.length > 0 && (
-            <View className="mt-2">
-              <Text className="text-gray-600 mb-2">已有文件：</Text>
-              {request.proof.map((file, index) => (
-                <View key={index} className="flex-row items-center bg-gray-50 p-2 rounded-lg mb-2">
-                  <Text className="flex-1 text-gray-900">{file.name}</Text>
-                </View>
-              ))}
-            </View>
-          )}
+          {/*{request.proof && request.proof.length > 0 && (*/}
+          {/*  <View className="mt-2">*/}
+          {/*    <Text className="text-gray-600 mb-2">已有文件：</Text>*/}
+          {/*    {request.proof.map((file, index) => (*/}
+          {/*      <View key={index} className="flex-row items-center bg-gray-50 p-2 rounded-lg mb-2">*/}
+          {/*        <Text className="flex-1 text-gray-900">{file.name}</Text>*/}
+          {/*      </View>*/}
+          {/*    ))}*/}
+          {/*  </View>*/}
+          {/*)}*/}
 
           {/* 附件列表 */}
           {request.proof && request.proof.length > 0 && (
