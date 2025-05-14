@@ -1,4 +1,5 @@
 import { request, RequestOptions } from './api';
+import { Storage } from '@/types/nestapi';
 
 // export interface UploadResponse {
 //   url: string;
@@ -52,7 +53,7 @@ export const uploadApi = {
       formData.append('file', file as any);
     }
 
-    return request<API.UploadResponse>('/api/tools/upload', {
+    return request<Storage>('/api/tools/upload', {
       method: 'POST',
       data: formData,
       requestType: 'form',

@@ -1,7 +1,7 @@
 import FileUpload from "@/components/app/FileUpload";
 import { leaveBalanceApi } from '@/lib/leaveBalance';
 import { uploadApi } from "@/lib/upload";
-import { LeaveEntity } from '@/types/nestapi';
+import { LeaveEntity, Storage } from '@/types/nestapi';
 import { calculateLeaveDays } from "@/utils/date";
 import { zodResolver } from '@hookform/resolvers/zod';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -13,13 +13,20 @@ import { Controller, useForm } from 'react-hook-form';
 import { ActivityIndicator, Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { z } from 'zod';
 
-interface Attachment {
-  name: string;
-  url: string;
-}
+// interface Attachment {
+//   name: string;
+//   url: string;
+// }
+//
+// interface ExtendedLeaveEntity extends LeaveEntity {
+//   attachments?: Attachment[];
+// }
 
-interface ExtendedLeaveEntity extends LeaveEntity {
-  attachments?: Attachment[];
+interface Attachment {
+  name: string
+  uri: string
+  type: string
+  size: number
 }
 
 // 定义表单验证 schema
@@ -50,7 +57,7 @@ export default function LeaveRequestFormScreen() {
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [files, setFiles] = useState<Array<{ name: string; uri: string; type: string; size: number }>>([]);
+  const [files, setFiles] = useState<Storage[]>([]);
 
   // 使用 React Query 获取假期统计
   const { data: leaveStats, isLoading: isLoadingStats } = useQuery({
@@ -59,7 +66,7 @@ export default function LeaveRequestFormScreen() {
   });
 
   // 如果是编辑模式，获取请假详情
-  const { data: request, isLoading: isLoadingRequest } = useQuery<ExtendedLeaveEntity>({
+  const { data: request, isLoading: isLoadingRequest } = useQuery<LeaveEntity>({
     queryKey: ['leaveRequest', id],
     queryFn: () => leaveBalanceApi.getLeaveRequest({id: Number(id)}),
     enabled: isEdit,
@@ -94,15 +101,10 @@ export default function LeaveRequestFormScreen() {
         startDate: new Date(request.startDate),
         endDate: new Date(request.endDate),
         reason: request.reason,
-        proof: request.proof?.[0],
+        proof: request.proof,
       });
       if (request.proof && request.proof.length > 0) {
-        setFiles(request.proof.map(url => ({
-          name: url.split('/').pop() || '文件',
-          uri: url,
-          type: 'application/octet-stream',
-          size: 0
-        })));
+        setFiles(request.proof);
       }
     } else {
       // 新增模式下清空表单
@@ -147,23 +149,23 @@ export default function LeaveRequestFormScreen() {
       const leaveDays = calculateLeaveDays(data.startDate, data.endDate);
       
       // 处理文件上传
-      let proof:string[] = [];
-      if (files.length > 0) {
-        for (const file of files) {
-          try {
-            const uploadResponse = await uploadApi.uploadFile({
-              uri: file.uri,
-              type: file.type,
-              name: file.name,
-            });
-            proof.push(uploadResponse.filename);
-          } catch (error) {
-            console.error('文件上传失败:', error);
-            Alert.alert('错误', '文件上传失败，请重试');
-            return;
-          }
-        }
-      }
+      // let proof:string[] = [];
+      // if (files.length > 0) {
+      //   for (const file of files) {
+      //     try {
+      //       const uploadResponse = await uploadApi.uploadFile({
+      //         uri: file.uri,
+      //         type: file.type,
+      //         name: file.name,
+      //       });
+      //       proof.push(uploadResponse.filename);
+      //     } catch (error) {
+      //       console.error('文件上传失败:', error);
+      //       Alert.alert('错误', '文件上传失败，请重试');
+      //       return;
+      //     }
+      //   }
+      // }
       
       const formattedData = {
         type: data.leaveType as 1 | 2 | 3 | 4 | 5,
@@ -172,7 +174,9 @@ export default function LeaveRequestFormScreen() {
         amount: leaveDays.toString(),
         status: 1 as const,
         reason: data.reason,
-        proof: proof,
+        proof: files.map((file) => {
+          return file.id
+        }),
       };
 
       if (isEdit) {
@@ -197,6 +201,24 @@ export default function LeaveRequestFormScreen() {
       setIsSubmitting(false);
     }
   };
+
+  const onUpload = async (file: Attachment) => {
+    try {
+      setIsSubmitting(true)
+      const uploadResponse = await uploadApi.uploadFile({
+        uri: file.uri,
+        type: file.type,
+        name: file.name,
+      });
+      files.push(uploadResponse)
+      setFiles(files)
+    } catch (error) {
+      console.error('文件上传失败:', error);
+      Alert.alert('错误', '文件上传失败，请重试');
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   if (isEdit && isLoadingRequest) {
     return (
@@ -376,7 +398,12 @@ export default function LeaveRequestFormScreen() {
         <View className="mb-4">
           <Text className="text-gray-600 mb-2">上传证明文件（可选）</Text>
           <FileUpload
-            onFilesSelected={(selectedFiles) => setFiles(selectedFiles)}
+            onFilesSelected={(selectedFiles) => onUpload({
+              name: selectedFiles[0].name,
+              uri: selectedFiles[0].uri,
+              type: selectedFiles[0].type,
+              size: selectedFiles[0].size,
+            })}
             maxFiles={3}
             allowedTypes={['image/*', 'application/pdf']}
           />

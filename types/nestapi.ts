@@ -1039,6 +1039,59 @@ export interface FileUploadDto {
   file: File;
 }
 
+export interface Storage {
+  /** 文件名 */
+  name: string;
+  /** 真实文件名 */
+  fileName: string;
+  /** 扩展名 */
+  extName: string;
+  /** 文件类型 */
+  path: string;
+  /** 文件类型 */
+  type: string;
+  /** 文件大小 */
+  size: string;
+  /** 用户ID */
+  userId: number;
+  leave: LeaveEntity | null;
+  id: number;
+  /** @format date-time */
+  createdAt: string;
+  /** @format date-time */
+  updatedAt: string;
+}
+
+export interface LeaveEntity {
+  /** status: 1:PENDING, 2:APPROVED, 3:REJECTED, 4:CANCELLED */
+  status: number;
+  /** type: 1:COMPENSATE, 2:ANNUAL, 3:SICK, 4:PERSONAL, 5:OTHER */
+  type: number;
+  /**
+   * 开始时间
+   * @format date-time
+   */
+  startDate: string;
+  /**
+   * 结束时间
+   * @format date-time
+   */
+  endDate: string;
+  amount: string;
+  reason: string;
+  proof: Storage[];
+  user: UserEntity;
+  approver: UserEntity;
+  comment: string;
+  /** @format date-time */
+  doneAt: string;
+  id: number;
+  /** @format date-time */
+  createdAt: string;
+  /** @format date-time */
+  updatedAt: string;
+}
+
 export interface SFileInfo {
   /** 文件id */
   id: string;
@@ -1201,36 +1254,6 @@ export interface TodoUpdateDto {
   value?: string;
 }
 
-export interface LeaveEntity {
-  /** status: 1:PENDING, 2:APPROVED, 3:REJECTED, 4:CANCELLED */
-  status: number;
-  /** type: 1:COMPENSATE, 2:ANNUAL, 3:SICK, 4:PERSONAL, 5:OTHER */
-  type: number;
-  /**
-   * 开始时间
-   * @format date-time
-   */
-  startDate: string;
-  /**
-   * 结束时间
-   * @format date-time
-   */
-  endDate: string;
-  amount: string;
-  reason: string;
-  proof: string[] | null;
-  user: UserEntity;
-  approver: UserEntity;
-  comment: string;
-  /** @format date-time */
-  doneAt: string;
-  id: number;
-  /** @format date-time */
-  createdAt: string;
-  /** @format date-time */
-  updatedAt: string;
-}
-
 export interface LeaveDto {
   /** 申请时长 */
   amount: string;
@@ -1263,7 +1286,7 @@ export interface LeaveDto {
    */
   reason: string;
   /** 请假佐证 */
-  proof?: string[] | null;
+  proof?: number[];
   /** 评论 */
   comment?: string;
   /**
@@ -1310,7 +1333,7 @@ export interface LeaveUpdateDto {
    */
   reason?: string;
   /** 请假佐证 */
-  proof?: string[] | null;
+  proof?: number[];
   /** 评论 */
   comment?: string;
   /**
