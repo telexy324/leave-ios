@@ -53,6 +53,10 @@ export default function FileUpload({
         Alert.alert('提示', `最多只能上传 ${maxFiles} 个文件`);
         return;
       }
+      if (files.some((file) => file.name === newFile.name)) {
+        Alert.alert('提示', `不能上传同名文件`);
+        return;
+      }
 
       const newFiles = [...files, newFile];
       setFiles(newFiles);
@@ -82,6 +86,10 @@ export default function FileUpload({
 
       if (files.length >= maxFiles) {
         Alert.alert('提示', `最多只能上传 ${maxFiles} 个文件`);
+        return;
+      }
+      if (files.some((file) => file.name === newFile.name)) {
+        Alert.alert('提示', `不能上传同名文件`);
         return;
       }
 
