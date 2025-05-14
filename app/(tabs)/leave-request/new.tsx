@@ -229,6 +229,23 @@ export default function LeaveRequestFormScreen() {
     }
   }
 
+  const onRemove = async (attachment: Attachment) => {
+    try {
+      const index = files.findIndex(file => file.fileName === attachment.name);
+
+      let removedFile: Storage | undefined;
+
+      if (index !== -1) {
+        // 从原数组中移除并返回
+        removedFile = files.splice(index, 1)[0];
+        await uploadApi.deleteFile({ id: removedFile.id })
+      }
+    } catch (error) {
+      console.error('文件删除失败:', error);
+      Alert.alert('错误', '文件删除失败，请重试');
+    }
+  }
+
   if (isEdit && isLoadingRequest) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -407,25 +424,26 @@ export default function LeaveRequestFormScreen() {
         <View className="mb-4">
           <Text className="text-gray-600 mb-2">上传证明文件（可选）</Text>
           <FileUpload
-            onFilesSelected={(selectedFiles) => onUpload({
-              name: selectedFiles[0].name,
-              uri: selectedFiles[0].uri,
-              type: selectedFiles[0].type,
-              size: selectedFiles[0].size,
+            onFilesSelected={(selectedFile) => onUpload({
+              name: selectedFile.name,
+              uri: selectedFile.uri,
+              type: selectedFile.type,
+              size: selectedFile.size,
             })}
             maxFiles={3}
             allowedTypes={['image/*', 'application/pdf']}
+            onFilesRemoved={(selectedFile) => onRemove(selectedFile)}
           />
-          {isEdit && files.length > 0 && (
-            <View className="mt-2">
-              <Text className="text-gray-600 mb-2">已有文件：</Text>
-              {files.map((file, index) => (
-                <View key={index} className="flex-row items-center bg-gray-50 p-2 rounded-lg mb-2">
-                  <Text className="flex-1 text-gray-900">{file.name}</Text>
-                </View>
-              ))}
-            </View>
-          )}
+          {/*{isEdit && files.length > 0 && (*/}
+          {/*  <View className="mt-2">*/}
+          {/*    <Text className="text-gray-600 mb-2">已有文件：</Text>*/}
+          {/*    {files.map((file, index) => (*/}
+          {/*      <View key={index} className="flex-row items-center bg-gray-50 p-2 rounded-lg mb-2">*/}
+          {/*        <Text className="flex-1 text-gray-900">{file.name}</Text>*/}
+          {/*      </View>*/}
+          {/*    ))}*/}
+          {/*  </View>*/}
+          {/*)}*/}
         </View>
 
         {/* 提交按钮 */}

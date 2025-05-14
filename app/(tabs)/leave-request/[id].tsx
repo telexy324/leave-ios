@@ -7,21 +7,21 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
 import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
-interface Attachment {
-  name: string;
-  url: string;
-}
-
-interface ExtendedLeaveEntity extends LeaveEntity {
-  attachments?: Attachment[];
-}
+// interface Attachment {
+//   name: string;
+//   url: string;
+// }
+//
+// interface ExtendedLeaveEntity extends LeaveEntity {
+//   attachments?: Attachment[];
+// }
 
 export default function LeaveRequestDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   // 使用 React Query 获取请假详情
-  const { data: request, isLoading } = useQuery<ExtendedLeaveEntity>({
+  const { data: request, isLoading } = useQuery<LeaveEntity>({
     queryKey: ['leaveRequest', id],
     queryFn: () => leaveBalanceApi.getLeaveRequest({id: Number(id)}),
     staleTime: 30000, // 30秒内不重新请求
@@ -108,12 +108,23 @@ export default function LeaveRequestDetailScreen() {
             </View>
           )}
 
+          {request.proof && request.proof.length > 0 && (
+            <View className="mt-2">
+              <Text className="text-gray-600 mb-2">已有文件：</Text>
+              {request.proof.map((file, index) => (
+                <View key={index} className="flex-row items-center bg-gray-50 p-2 rounded-lg mb-2">
+                  <Text className="flex-1 text-gray-900">{file.name}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
           {/* 附件列表 */}
-          {request.attachments && request.attachments.length > 0 && (
+          {request.proof && request.proof.length > 0 && (
             <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
               <Text className="text-lg font-bold mb-3">附件</Text>
               <View className="space-y-2">
-                {request.attachments.map((file: Attachment, index: number) => (
+                {request.proof.map((file, index) => (
                   <TouchableOpacity
                     key={index}
                     className="flex-row items-center bg-gray-50 p-3 rounded-lg"

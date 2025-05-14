@@ -12,9 +12,10 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 
 interface FileUploadProps {
-  onFilesSelected: (files: File[]) => void;
+  onFilesSelected: (files: File) => void;
   maxFiles?: number;
   allowedTypes?: string[];
+  onFilesRemoved: (files: File) => void;
 }
 
 interface File {
@@ -28,6 +29,7 @@ export default function FileUpload({
   onFilesSelected,
   maxFiles = 5,
   allowedTypes = ['image/*', 'application/pdf'],
+  onFilesRemoved,
 }: FileUploadProps) {
   const [files, setFiles] = useState<File[]>([]);
 
@@ -54,7 +56,7 @@ export default function FileUpload({
 
       const newFiles = [...files, newFile];
       setFiles(newFiles);
-      onFilesSelected(newFiles);
+      onFilesSelected(newFile);
     } catch (error) {
       console.error('Error picking document:', error);
       Alert.alert('错误', '选择文件时出错');
@@ -85,7 +87,7 @@ export default function FileUpload({
 
       const newFiles = [...files, newFile];
       setFiles(newFiles);
-      onFilesSelected(newFiles);
+      onFilesSelected(newFile);
     } catch (error) {
       console.error('Error picking image:', error);
       Alert.alert('错误', '选择图片时出错');
@@ -93,9 +95,10 @@ export default function FileUpload({
   };
 
   const removeFile = (index: number) => {
+    const removedFile = files[index];
     const newFiles = files.filter((_, i) => i !== index);
     setFiles(newFiles);
-    onFilesSelected(newFiles);
+    onFilesRemoved(removedFile);
   };
 
   return (

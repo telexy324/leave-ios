@@ -37,10 +37,18 @@ export const uploadApi = {
   //   });
   // },
 
-  // 删除文件
-  // deleteFile: (filename: string) => {
-  //   return api.delete(`/upload/${filename}`);
-  // },
+  deleteFile(
+    // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+    params: API.IdParams,
+    options?: RequestOptions,
+  ) {
+    const { id: param0, ...queryParams } = params;
+    return request<any>(`/api/tools/upload/${param0}`, {
+      method: 'DELETE',
+      params: { ...queryParams },
+      ...(options || { successMsg: '删除成功' }),
+    });
+  },
 
   // 获取文件信息
   // getFileInfo: (filename: string) => {
