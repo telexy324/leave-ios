@@ -39,7 +39,16 @@ const schema = z.object({
     required_error: '请选择结束时间',
   }),
   reason: z.string().min(8, '请假原因至少8个字符'),
-  proof: z.string().optional(),
+  proof: z.array(z.object({
+    id: z.number(),
+    filename: z.string(),
+    originalname: z.string(),
+    mimetype: z.string(),
+    size: z.string(),
+    url: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  })).optional(),
 });
 
 type FormData = z.infer<typeof schema>;
