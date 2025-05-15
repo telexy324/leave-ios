@@ -67,6 +67,7 @@ export default function LeaveRequestFormScreen() {
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [files, setFiles] = useState<Storage[]>([]);
+  const [initFiles, setInitFiles] = useState<Attachment[]>([]);
 
   // 使用 React Query 获取假期统计
   const { data: leaveStats, isLoading: isLoadingStats } = useQuery({
@@ -114,6 +115,17 @@ export default function LeaveRequestFormScreen() {
       });
       if (request.proof && request.proof.length > 0) {
         setFiles(request.proof);
+        const attachments: Attachment[] = [];
+        files.forEach((file)=>{
+          const attachment = {
+            name: file.fileName,
+            type: '',
+            size: 0,
+            uri: '',
+          }
+          attachments.push(attachment)
+        })
+        setInitFiles(attachments);
       }
     } else {
       // 新增模式下清空表单
@@ -126,7 +138,7 @@ export default function LeaveRequestFormScreen() {
       });
       setFiles([]);
     }
-  }, [request, reset, isEdit]);
+  }, [request, reset, isEdit, files]);
 
   // 将后端数据转换为前端需要的格式
   const leaveTypes: LeaveType[] = [
@@ -433,6 +445,7 @@ export default function LeaveRequestFormScreen() {
             maxFiles={3}
             allowedTypes={['image/*', 'application/pdf']}
             onFilesRemoved={(selectedFile) => onRemove(selectedFile)}
+            initialFiles={initFiles}
           />
           {/*{isEdit && files.length > 0 && (*/}
           {/*  <View className="mt-2">*/}

@@ -16,6 +16,7 @@ interface FileUploadProps {
   maxFiles?: number;
   allowedTypes?: string[];
   onFilesRemoved: (files: File) => void;
+  initialFiles?: File[];
 }
 
 interface File {
@@ -57,8 +58,9 @@ export default function FileUpload({
   maxFiles = 5,
   allowedTypes = ['image/*', 'application/pdf'],
   onFilesRemoved,
+  initialFiles = [],
 }: FileUploadProps) {
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<File[]>(initialFiles);
 
   const showAlert = (title: string, message: string) => {
     Alert.alert(
@@ -91,10 +93,10 @@ export default function FileUpload({
       }
 
       // 检查文件是否已存在
-      const isDuplicate = files.some(file => 
+      const isDuplicate = files.some(file =>
         file.name === newFile.name && file.size === newFile.size
       );
-      
+
       if (isDuplicate) {
         showAlert('提示', `文件 "${newFile.name}" 已存在，请勿重复上传`);
         return;
@@ -122,7 +124,7 @@ export default function FileUpload({
 
       const asset = result.assets[0];
       const fileHash = await getFileHash(asset.uri);
-      
+
       const newFile = {
         name: asset.fileName || asset.uri.split('/').pop() || 'image.jpg',
         uri: asset.uri,
@@ -137,10 +139,10 @@ export default function FileUpload({
       }
 
       // 检查文件是否已存在
-      const isDuplicate = files.some(file => 
+      const isDuplicate = files.some(file =>
         file.hash === newFile.hash && file.hash !== ''
       );
-      
+
       if (isDuplicate) {
         showAlert('提示', `图片已存在，请勿重复上传`);
         return;
@@ -218,4 +220,4 @@ export default function FileUpload({
       )}
     </View>
   );
-} 
+}
