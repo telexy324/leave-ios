@@ -1367,6 +1367,17 @@ export interface LeaveStats {
   usedPersonalLeaves: number;
 }
 
+export interface LeaveApprovalStats {
+  /** 未审批请求 */
+  totalUnApproveLeaves: number;
+  /** 已审批请求 */
+  totalApprovedLeaves: number;
+  /** 已通过请求 */
+  totalApprovalLeaves: number;
+  /** 已拒绝请求 */
+  totalRejectLeaves: number;
+}
+
 export interface LeaveBalanceEntity {
   /** status: 1:COMPENSATE, 2:ANNUAL, 3:SICK, 4:PERSONAL, 5:OTHER */
   type: number;

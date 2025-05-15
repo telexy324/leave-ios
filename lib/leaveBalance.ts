@@ -1,5 +1,5 @@
 import { LeaveBalance } from '@/lib/leave';
-import { LeaveDto, LeaveEntity, LeaveUpdateDto, LeaveStats } from '@/types/nestapi';
+import { LeaveDto, LeaveEntity, LeaveUpdateDto, LeaveStats, LeaveApprovalStats } from '@/types/nestapi';
 import { request, RequestOptions } from './api';
 
 export const leaveBalanceApi = {
@@ -126,6 +126,14 @@ export const leaveBalanceApi = {
   // 获取请假总数统计
   getLeaveStats: (options?: RequestOptions) => {
     return request<LeaveStats>(`/api/leaves/stats`, {
+      method: 'GET',
+      ...(options || {}),
+    });
+  },
+
+  // 获取审批总数统计
+  getLeaveApprovalStats: (options?: RequestOptions) => {
+    return request<LeaveApprovalStats>(`/api/leaves/approvals`, {
       method: 'GET',
       ...(options || {}),
     });
