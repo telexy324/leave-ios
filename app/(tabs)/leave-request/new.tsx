@@ -12,22 +12,7 @@ import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { ActivityIndicator, Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { z } from 'zod';
-
-// interface Attachment {
-//   name: string;
-//   url: string;
-// }
-//
-// interface ExtendedLeaveEntity extends LeaveEntity {
-//   attachments?: Attachment[];
-// }
-
-interface Attachment {
-  name: string
-  uri: string
-  type: string
-  size: number
-}
+import FileUploadNew from "@/components/app/FileUploadNew";
 
 // 定义表单验证 schema
 const schema = z.object({
@@ -67,7 +52,6 @@ export default function LeaveRequestFormScreen() {
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [files, setFiles] = useState<Storage[]>([]);
-  const [initFiles, setInitFiles] = useState<Attachment[]>([]);
 
   // 使用 React Query 获取假期统计
   const { data: leaveStats, isLoading: isLoadingStats } = useQuery({
@@ -115,17 +99,6 @@ export default function LeaveRequestFormScreen() {
       });
       if (request.proof && request.proof.length > 0) {
         setFiles(request.proof);
-        const attachments: Attachment[] = [];
-        files.forEach((file)=>{
-          const attachment = {
-            name: file.fileName,
-            type: '',
-            size: 0,
-            uri: '',
-          }
-          attachments.push(attachment)
-        })
-        setInitFiles(attachments);
       }
     } else {
       // 新增模式下清空表单
@@ -138,7 +111,7 @@ export default function LeaveRequestFormScreen() {
       });
       setFiles([]);
     }
-  }, [request, reset, isEdit, files]);
+  }, [request, reset, isEdit]);
 
   // 将后端数据转换为前端需要的格式
   const leaveTypes: LeaveType[] = [
@@ -222,41 +195,6 @@ export default function LeaveRequestFormScreen() {
       setIsSubmitting(false);
     }
   };
-
-  const onUpload = async (file: Attachment) => {
-    try {
-      setIsSubmitting(true)
-      const uploadResponse = await uploadApi.uploadFile({
-        uri: file.uri,
-        type: file.type,
-        name: file.name,
-      });
-      files.push(uploadResponse)
-      setFiles(files)
-    } catch (error) {
-      console.error('文件上传失败:', error);
-      Alert.alert('错误', '文件上传失败，请重试');
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const onRemove = async (attachment: Attachment) => {
-    try {
-      const index = files.findIndex(file => file.fileName === attachment.name);
-
-      let removedFile: Storage | undefined;
-
-      if (index !== -1) {
-        // 从原数组中移除并返回
-        removedFile = files.splice(index, 1)[0];
-        await uploadApi.deleteFile({ id: removedFile.id })
-      }
-    } catch (error) {
-      console.error('文件删除失败:', error);
-      Alert.alert('错误', '文件删除失败，请重试');
-    }
-  }
 
   if (isEdit && isLoadingRequest) {
     return (
@@ -435,17 +373,12 @@ export default function LeaveRequestFormScreen() {
         {/* 文件上传 */}
         <View className="mb-4">
           <Text className="text-gray-600 mb-2">上传证明文件（可选）</Text>
-          <FileUpload
-            onFilesSelected={(selectedFile) => onUpload({
-              name: selectedFile.name,
-              uri: selectedFile.uri,
-              type: selectedFile.type,
-              size: selectedFile.size,
-            })}
+          <FileUploadNew
+            onRequestStart={() => setIsSubmitting(true)}
             maxFiles={3}
             allowedTypes={['image/*', 'application/pdf']}
-            onFilesRemoved={(selectedFile) => onRemove(selectedFile)}
-            initialFiles={initFiles}
+            onRequestEnd={() => setIsSubmitting(false)}
+            initialFiles={files}
           />
           {/*{isEdit && files.length > 0 && (*/}
           {/*  <View className="mt-2">*/}
