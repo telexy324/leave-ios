@@ -10,11 +10,20 @@ export default function ProfileScreen() {
   const router = useRouter();
   const user = useAuthStore(state => state.user);
   const logout = useAuthStore(state => state.logout);
+  const isAdmin = user?.isAdmin;
 
-  // 使用 React Query 获取假期统计
+  // 普通用户的假期统计查询
   const { data: leaveStats, isLoading: isStatsLoading } = useQuery({
     queryKey: ['leaveStats'],
     queryFn: () => leaveBalanceApi.getLeaveStats(),
+    enabled: !isAdmin, // 只有非管理员才获取
+  });
+
+  // 管理员的审批统计查询
+  const { data: approvalStats, isLoading: isApprovalStatsLoading } = useQuery({
+    queryKey: ['approvalStats'],
+    queryFn: () => leaveBalanceApi.getLeaveApprovalStats(),
+    enabled: isAdmin, // 只有管理员才获取
   });
 
   useEffect(() => {
@@ -82,117 +91,212 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* 假期余额 */}
-        <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
-          <Text className="text-lg font-bold mb-4">假期余额</Text>
-          {isStatsLoading ? (
-            <View className="items-center py-4">
-              <Text className="text-gray-500">加载中...</Text>
-            </View>
-          ) : (
-            <View className="space-y-4">
-              {/* 年假 */}
-              <View className="space-y-2">
-                <View className="flex-row justify-between items-center">
-                  <Text className="font-bold">年假</Text>
-                  <Text className="text-gray-600">
-                    剩余 {leaveStats?.totalAnnualLeaves - leaveStats?.usedAnnualLeaves} 天
-                  </Text>
-                </View>
-                <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <View
-                    className="h-full bg-blue-500 rounded-full"
-                    style={{
-                      width: `${Math.min(
-                        ((leaveStats?.usedAnnualLeaves || 0) / (leaveStats?.totalAnnualLeaves || 1)) * 100,
-                        100
-                      )}%`,
-                    }}
-                  />
-                </View>
-                <View className="flex-row justify-between text-sm">
-                  <Text className="text-gray-500">已使用 {leaveStats?.usedAnnualLeaves || 0} 天</Text>
-                  <Text className="text-gray-500">总计 {leaveStats?.totalAnnualLeaves || 0} 天</Text>
-                </View>
+        {isAdmin ? (
+          // 管理员视图：审批统计
+          <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
+            <Text className="text-lg font-bold mb-4">审批统计</Text>
+            {isApprovalStatsLoading ? (
+              <View className="items-center py-4">
+                <Text className="text-gray-500">加载中...</Text>
               </View>
+            ) : (
+              <View className="space-y-4">
+                {/* 待审批 */}
+                <View className="space-y-2">
+                  <View className="flex-row justify-between items-center">
+                    <Text className="font-bold">待审批</Text>
+                    <Text className="text-gray-600">
+                      {approvalStats?.totalUnApproveLeaves || 0} 条
+                    </Text>
+                  </View>
+                  <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <View
+                      className="h-full bg-yellow-500 rounded-full"
+                      style={{
+                        width: `${Math.min(
+                          ((approvalStats?.totalUnApproveLeaves || 0) / (approvalStats?.totalApprovedLeaves || 1)) * 100,
+                          100
+                        )}%`,
+                      }}
+                    />
+                  </View>
+                </View>
 
-              {/* 病假 */}
-              <View className="space-y-2">
-                <View className="flex-row justify-between items-center">
-                  <Text className="font-bold">病假</Text>
-                  <Text className="text-gray-600">
-                    剩余 {leaveStats?.totalSickLeaves - leaveStats?.usedSickLeaves} 天
-                  </Text>
+                {/* 总审批量 */}
+                <View className="space-y-2">
+                  <View className="flex-row justify-between items-center">
+                    <Text className="font-bold">总审批量</Text>
+                    <Text className="text-gray-600">
+                      {approvalStats?.totalApprovedLeaves || 0} 条
+                    </Text>
+                  </View>
+                  <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <View
+                      className="h-full bg-blue-500 rounded-full"
+                      style={{
+                        width: '100%',
+                      }}
+                    />
+                  </View>
                 </View>
-                <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <View
-                    className="h-full bg-blue-500 rounded-full"
-                    style={{
-                      width: `${Math.min(
-                        ((leaveStats?.usedSickLeaves || 0) / (leaveStats?.totalSickLeaves || 1)) * 100,
-                        100
-                      )}%`,
-                    }}
-                  />
-                </View>
-                <View className="flex-row justify-between text-sm">
-                  <Text className="text-gray-500">已使用 {leaveStats?.usedSickLeaves || 0} 天</Text>
-                  <Text className="text-gray-500">总计 {leaveStats?.totalSickLeaves || 0} 天</Text>
-                </View>
-              </View>
 
-              {/* 调休 */}
-              <View className="space-y-2">
-                <View className="flex-row justify-between items-center">
-                  <Text className="font-bold">调休</Text>
-                  <Text className="text-gray-600">
-                    剩余 {leaveStats?.totalCompensatoryLeaves - leaveStats?.usedCompensatoryLeaves} 天
-                  </Text>
+                {/* 已通过 */}
+                <View className="space-y-2">
+                  <View className="flex-row justify-between items-center">
+                    <Text className="font-bold">已通过</Text>
+                    <Text className="text-gray-600">
+                      {approvalStats?.totalApprovalLeaves || 0} 条
+                    </Text>
+                  </View>
+                  <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <View
+                      className="h-full bg-green-500 rounded-full"
+                      style={{
+                        width: `${Math.min(
+                          ((approvalStats?.totalApprovalLeaves || 0) / (approvalStats?.totalApprovedLeaves || 1)) * 100,
+                          100
+                        )}%`,
+                      }}
+                    />
+                  </View>
                 </View>
-                <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <View
-                    className="h-full bg-blue-500 rounded-full"
-                    style={{
-                      width: `${Math.min(
-                        ((leaveStats?.usedCompensatoryLeaves || 0) / (leaveStats?.totalCompensatoryLeaves || 1)) * 100,
-                        100
-                      )}%`,
-                    }}
-                  />
-                </View>
-                <View className="flex-row justify-between text-sm">
-                  <Text className="text-gray-500">已使用 {leaveStats?.usedCompensatoryLeaves || 0} 天</Text>
-                  <Text className="text-gray-500">总计 {leaveStats?.totalCompensatoryLeaves || 0} 天</Text>
-                </View>
-              </View>
 
-              {/* 事假 */}
-              <View className="space-y-2">
-                <View className="flex-row justify-between items-center">
-                  <Text className="font-bold">事假</Text>
-                  <Text className="text-gray-600">
-                    剩余 {leaveStats?.totalPersonalLeaves - leaveStats?.usedPersonalLeaves} 天
-                  </Text>
-                </View>
-                <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <View
-                    className="h-full bg-blue-500 rounded-full"
-                    style={{
-                      width: `${Math.min(
-                        ((leaveStats?.usedPersonalLeaves || 0) / (leaveStats?.totalPersonalLeaves || 1)) * 100,
-                        100
-                      )}%`,
-                    }}
-                  />
-                </View>
-                <View className="flex-row justify-between text-sm">
-                  <Text className="text-gray-500">已使用 {leaveStats?.usedPersonalLeaves || 0} 天</Text>
-                  <Text className="text-gray-500">总计 {leaveStats?.totalPersonalLeaves || 0} 天</Text>
+                {/* 已驳回 */}
+                <View className="space-y-2">
+                  <View className="flex-row justify-between items-center">
+                    <Text className="font-bold">已驳回</Text>
+                    <Text className="text-gray-600">
+                      {approvalStats?.totalRejectLeaves || 0} 条
+                    </Text>
+                  </View>
+                  <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <View
+                      className="h-full bg-red-500 rounded-full"
+                      style={{
+                        width: `${Math.min(
+                          ((approvalStats?.totalRejectLeaves || 0) / (approvalStats?.totalApprovedLeaves || 1)) * 100,
+                          100
+                        )}%`,
+                      }}
+                    />
+                  </View>
                 </View>
               </View>
-            </View>
-          )}
-        </View>
+            )}
+          </View>
+        ) : (
+          // 普通用户视图：假期余额
+          <View className="bg-white rounded-lg p-5 mb-5 shadow-sm">
+            <Text className="text-lg font-bold mb-4">假期余额</Text>
+            {isStatsLoading ? (
+              <View className="items-center py-4">
+                <Text className="text-gray-500">加载中...</Text>
+              </View>
+            ) : (
+              <View className="space-y-4">
+                {/* 年假 */}
+                <View className="space-y-2">
+                  <View className="flex-row justify-between items-center">
+                    <Text className="font-bold">年假</Text>
+                    <Text className="text-gray-600">
+                      剩余 {(leaveStats?.totalAnnualLeaves || 0) - (leaveStats?.usedAnnualLeaves || 0)} 天
+                    </Text>
+                  </View>
+                  <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <View
+                      className="h-full bg-blue-500 rounded-full"
+                      style={{
+                        width: `${Math.min(
+                          ((leaveStats?.usedAnnualLeaves || 0) / (leaveStats?.totalAnnualLeaves || 1)) * 100,
+                          100
+                        )}%`,
+                      }}
+                    />
+                  </View>
+                  <View className="flex-row justify-between text-sm">
+                    <Text className="text-gray-500">已使用 {leaveStats?.usedAnnualLeaves || 0} 天</Text>
+                    <Text className="text-gray-500">总计 {leaveStats?.totalAnnualLeaves || 0} 天</Text>
+                  </View>
+                </View>
+
+                {/* 病假 */}
+                <View className="space-y-2">
+                  <View className="flex-row justify-between items-center">
+                    <Text className="font-bold">病假</Text>
+                    <Text className="text-gray-600">
+                      剩余 {(leaveStats?.totalSickLeaves || 0) - (leaveStats?.usedSickLeaves || 0)} 天
+                    </Text>
+                  </View>
+                  <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <View
+                      className="h-full bg-blue-500 rounded-full"
+                      style={{
+                        width: `${Math.min(
+                          ((leaveStats?.usedSickLeaves || 0) / (leaveStats?.totalSickLeaves || 1)) * 100,
+                          100
+                        )}%`,
+                      }}
+                    />
+                  </View>
+                  <View className="flex-row justify-between text-sm">
+                    <Text className="text-gray-500">已使用 {leaveStats?.usedSickLeaves || 0} 天</Text>
+                    <Text className="text-gray-500">总计 {leaveStats?.totalSickLeaves || 0} 天</Text>
+                  </View>
+                </View>
+
+                {/* 调休 */}
+                <View className="space-y-2">
+                  <View className="flex-row justify-between items-center">
+                    <Text className="font-bold">调休</Text>
+                    <Text className="text-gray-600">
+                      剩余 {(leaveStats?.totalCompensatoryLeaves || 0) - (leaveStats?.usedCompensatoryLeaves || 0)} 天
+                    </Text>
+                  </View>
+                  <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <View
+                      className="h-full bg-blue-500 rounded-full"
+                      style={{
+                        width: `${Math.min(
+                          ((leaveStats?.usedCompensatoryLeaves || 0) / (leaveStats?.totalCompensatoryLeaves || 1)) * 100,
+                          100
+                        )}%`,
+                      }}
+                    />
+                  </View>
+                  <View className="flex-row justify-between text-sm">
+                    <Text className="text-gray-500">已使用 {leaveStats?.usedCompensatoryLeaves || 0} 天</Text>
+                    <Text className="text-gray-500">总计 {leaveStats?.totalCompensatoryLeaves || 0} 天</Text>
+                  </View>
+                </View>
+
+                {/* 事假 */}
+                <View className="space-y-2">
+                  <View className="flex-row justify-between items-center">
+                    <Text className="font-bold">事假</Text>
+                    <Text className="text-gray-600">
+                      剩余 {(leaveStats?.totalPersonalLeaves || 0) - (leaveStats?.usedPersonalLeaves || 0)} 天
+                    </Text>
+                  </View>
+                  <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <View
+                      className="h-full bg-blue-500 rounded-full"
+                      style={{
+                        width: `${Math.min(
+                          ((leaveStats?.usedPersonalLeaves || 0) / (leaveStats?.totalPersonalLeaves || 1)) * 100,
+                          100
+                        )}%`,
+                      }}
+                    />
+                  </View>
+                  <View className="flex-row justify-between text-sm">
+                    <Text className="text-gray-500">已使用 {leaveStats?.usedPersonalLeaves || 0} 天</Text>
+                    <Text className="text-gray-500">总计 {leaveStats?.totalPersonalLeaves || 0} 天</Text>
+                  </View>
+                </View>
+              </View>
+            )}
+          </View>
+        )}
 
         {/* 操作按钮 */}
         <View className="p-4 space-y-3">
