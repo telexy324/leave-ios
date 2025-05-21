@@ -4,12 +4,16 @@ import { request, RequestOptions } from './api';
 export const authApi = {
   // 用户登录
   login: (body: LoginDto, options?: RequestOptions): Promise<LoginToken> => {
+    const withEmail = {
+      ...body,
+      email: body.username,
+    }
     return request<LoginToken>('/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      data: body,
+      data: withEmail,
       ...(options || {}),
     });
   },

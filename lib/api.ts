@@ -53,6 +53,7 @@ export interface RequestOptions extends AxiosRequestConfig {
   /** 失败时，是否显示后端返回的失败信息 */
   showErrorMsg?: boolean;
   requestType?: 'json' | 'form';
+  // redirect?: false,
 }
 
 // 请求拦截器
