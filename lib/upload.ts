@@ -43,7 +43,7 @@ export const uploadApi = {
     options?: RequestOptions,
   ) {
     const { id: param0, ...queryParams } = params;
-    return request<any>(`/api/tools/upload/${param0}`, {
+    return request<any>(`/api/upload/${param0}`, {
       method: 'DELETE',
       params: { ...queryParams },
       ...(options || { successMsg: '删除成功' }),
@@ -61,7 +61,7 @@ export const uploadApi = {
       formData.append('file', file as any);
     }
 
-    return request<Storage>('/api/tools/upload/mobile', {
+    return request<Storage>('/api/upload/mobile', {
       method: 'POST',
       data: formData,
       requestType: 'form',
